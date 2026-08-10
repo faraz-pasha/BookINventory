@@ -1,0 +1,592 @@
+/* Add Book*/
+/* Add/Edit Book Section */
+
+#addBookDialog {
+
+    background-color: #E8F1E3;
+
+}
+
+
+/* Labels */
+
+#addBookDialog QLabel {
+
+    color: #2F3E46;
+
+    font-size: 14px;
+
+    font-weight: bold;
+
+}
+
+
+/* Text fields */
+
+#addBookDialog QLineEdit {
+
+    background-color: white;
+
+    color: #2C2C2C;
+
+    border: 2px solid #CAD2C5;
+
+    border-radius: 12px;
+
+    padding: 8px 12px;
+
+}
+
+
+#addBookDialog QLineEdit:focus {
+
+    border: 2px solid #52796F;
+
+}
+
+
+/* Dropdowns */
+
+#addBookDialog QComboBox {
+
+    background-color: white;
+
+    color: #2C2C2C;
+
+    border: 2px solid #CAD2C5;
+
+    border-radius: 12px;
+
+    padding: 8px;
+
+}
+
+
+/* Spin boxes (pages/rating) */
+
+#addBookDialog QSpinBox {
+
+    background-color: white;
+
+    color: #2C2C2C;
+
+    border: 2px solid #CAD2C5;
+
+    border-radius: 12px;
+
+    padding: 8px;
+
+}
+
+
+/* Buttons */
+
+#addBookDialog QPushButton {
+
+    background-color: #52796F;
+
+    color: white;
+
+    border-radius: 12px;
+
+    padding: 10px 20px;
+
+    font-weight: bold;
+
+}
+
+
+#addBookDialog QPushButton:hover {
+
+    background-color: #354F52;
+
+}
+
+/* Notes box */
+
+#addBookDialog QTextEdit {
+
+    background-color: white;
+
+    color: #2C2C2C;
+
+    border: 2px solid #CAD2C5;
+
+    border-radius: 12px;
+
+    padding: 10px;
+
+}
+
+
+/* Checkbox */
+
+#addBookDialog QCheckBox {
+
+    color: #000000;
+
+    font-size: 14px;
+
+}
+
+
+#addBookDialog QCheckBox::indicator {
+
+    width: 18px;
+
+    height: 18px;
+
+}
+
+
+
+
+/* Main window */
+
+
+QMainWindow {
+
+
+    background-color: #E6DDF5;
+
+
+    font-family: "Segoe UI";
+
+    font-size: 14px;
+
+}
+
+
+QTreeWidget {
+
+    background-color: #ffffff;
+
+    color: #222222;
+
+    border: none;
+
+    border-right: 1px solid #dddddd;
+
+    padding: 10px;
+
+}
+
+
+QTreeWidget::item {
+
+    color: #222222;
+
+    padding: 8px;
+
+    border-radius: 6px;
+
+}
+
+
+QTreeWidget::item:hover {
+
+    background-color: #eeeeee;
+
+    color: #222222;
+
+}
+
+
+QTreeWidget::item:selected {
+
+    background-color: #d9c2a6;
+
+    color: #222222;
+
+}
+
+/* Search bar */
+
+QLineEdit {
+
+    background-color: white;
+
+    border: 1px solid #cccccc;
+
+    border-radius: 12px;
+
+    padding: 8px 12px;
+
+    font-size: 15px;
+
+}
+
+
+QLineEdit:focus {
+
+    border: 2px solid #b8860b;
+
+}
+
+
+/* Buttons */
+
+QPushButton {
+
+    background-color: #b8860b;
+
+    color: white;
+
+    border-radius: 10px;
+
+    padding: 8px 16px;
+
+    border: none;
+
+}
+QLabel {
+
+    color: #222222;
+
+}
+
+QPushButton {
+
+    background-color: #b8860b;
+
+    color: white;
+
+    border-radius: 10px;
+
+    padding: 8px 16px;
+
+    border: none;
+
+}
+
+
+QPushButton:hover {
+
+    background-color: #996f00;
+
+    color: white;
+
+}
+
+/* Combo box */
+
+QComboBox {
+
+    background-color: white;
+
+    border-radius: 10px;
+
+    padding: 6px 12px;
+
+    border: 1px solid #cccccc;
+
+}
+
+QLineEdit {
+
+    background-color: white;
+
+    color: #222222;
+
+    border: 1px solid #cccccc;
+
+    border-radius: 12px;
+
+    padding: 8px 12px;
+
+}
+
+
+QLineEdit::placeholder {
+
+    color: #777777;
+
+}
+
+QComboBox {
+
+    background-color: white;
+
+    color: #222222;
+
+    border-radius: 10px;
+
+    padding: 6px 12px;
+
+    border: 1px solid #cccccc;
+
+}
+
+
+QComboBox QAbstractItemView {
+
+    background-color: white;
+
+    color: #222222;
+
+}/* Main window */
+
+QMainWindow {
+
+    background-color: #F4EFE6;
+
+    color: #2C2C2C;
+
+    font-family: "Segoe UI";
+
+}
+
+
+/* Sidebar */
+
+QTreeWidget {
+
+    background-color: #2F3E46;
+
+    color: #F8F5F0;
+
+    border: none;
+
+    padding: 12px;
+
+}
+
+
+QTreeWidget::item {
+
+    color: #F8F5F0;
+
+    padding: 10px;
+
+    border-radius: 8px;
+
+}
+
+
+QTreeWidget::item:hover {
+
+    background-color: #354F52;
+
+}
+
+
+QTreeWidget::item:selected {
+
+    background-color: #C9A227;
+
+    color: #1B1B1B;
+
+}
+
+
+/* Search bar */
+
+QLineEdit {
+
+    background-color: #FFFFFF;
+
+    color: #2C2C2C;
+
+    border: 2px solid #CAD2C5;
+
+    border-radius: 14px;
+
+    padding: 10px 14px;
+
+    font-size: 15px;
+
+}
+#booksArea {
+
+   background-color: #D1D2B8;
+
+}
+
+QLineEdit:focus {
+
+    border: 2px solid #52796F;
+
+}
+
+
+/* Buttons */
+
+QPushButton {
+
+    background-color: #52796F;
+
+    color: white;
+
+    border-radius: 12px;
+
+    padding: 10px 18px;
+
+    font-weight: bold;
+
+}
+
+
+QPushButton:hover {
+
+    background-color: #354F52;
+
+}
+
+
+QPushButton:pressed {
+
+    background-color: #2F3E46;
+
+}
+
+
+/* Sort dropdown */
+
+QComboBox {
+
+    background-color: white;
+
+    color: #2C2C2C;
+
+    border: 2px solid #CAD2C5;
+
+    border-radius: 12px;
+
+    padding: 8px 12px;
+
+}
+
+
+QComboBox QAbstractItemView {
+
+    background-color: white;
+
+    color: #2C2C2C;
+
+    selection-background-color: #C9A227;
+
+}
+
+
+/* Labels */
+
+QLabel {
+
+    color: #2C2C2C;
+
+}
+
+/* Book Cards */
+
+QFrame#bookCard {
+
+    border-radius: 18px;
+
+    padding: 12px;
+
+    margin: 8px;
+
+}
+
+
+/* Read */
+
+QFrame#bookCard[status="read"] {
+
+    background-color: #B7D7C0;
+
+    border: 2px solid #8DB89A;
+
+}
+
+
+/* Unread */
+
+QFrame#bookCard[status="unread"] {
+
+    background-color: #E7B5B5;
+
+    border: 2px solid #D48C8C;
+
+}
+
+
+QFrame#bookCard:hover {
+
+    border: 2px solid #C9A227;
+
+}
+
+QFrame#bookCard QLabel {
+
+    background-color: transparent;
+
+}
+
+
+/* Book title */
+
+QLabel#bookTitle {
+
+    color: #2C2C2C;
+
+    font-size: 18px;
+
+    font-weight: bold;
+
+}
+
+
+
+#bookDetails {
+    background-color: #E8F1E3;
+}
+
+
+#detailsTitle {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2F3E46;
+}
+
+
+#sectionTitle {
+    font-size: 16px;
+    font-weight: bold;
+    color: #2F3E46;
+}
+
+
+#bookDetails QTextEdit {
+    background-color: white;
+    color: #2C2C2C;
+    border-radius: 12px;
+    border: 2px solid #CAD2C5;
+    padding: 10px;
+}
+
+
+#detailsStatus[status="read"] {
+    color: #52796F;
+    font-weight: bold;
+}
+
+
+#detailsStatus[status="unread"] {
+    color: #B56565;
+    font-weight: bold;
+}
+
+
+#bookDetails QPushButton {
+    background-color: #52796F;
+    color: white;
+    border-radius: 10px;
+    padding: 8px 18px;
+    font-weight: bold;
+}
+
+
+#bookDetails QPushButton:hover {
+    background-color: #354F52;
+}
