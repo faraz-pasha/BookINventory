@@ -12,7 +12,7 @@ from database import (
     get_genre_counts
 )
 from ui.book_details import BookDetails
-
+from ui.statistics_page import StatisticsPage
 
 class MainWindow(QMainWindow):
 
@@ -77,9 +77,7 @@ class MainWindow(QMainWindow):
 
         self.update_shelves()
 
-        self.sidebar.itemClicked.connect(
-            self.sidebar_clicked
-        )
+
 
         main_layout.addWidget(
             self.sidebar
@@ -130,6 +128,14 @@ class MainWindow(QMainWindow):
             "+ Add Book"
         )
 
+        statistics_button = QPushButton(
+            "📊 Statistics"
+        )
+
+        statistics_button.clicked.connect(
+            self.show_statistics
+        )
+
         button.clicked.connect(
             self.add_book
         )
@@ -143,12 +149,19 @@ class MainWindow(QMainWindow):
         )
 
         top_bar.addWidget(
+            statistics_button
+        )
+
+        top_bar.addWidget(
             button
         )
 
         right.addLayout(
             top_bar
         )
+        self.statistics_page = StatisticsPage()
+
+        self.statistics_page.hide()
         self.book_container = QWidget()
 
         self.book_container.setObjectName(
@@ -175,7 +188,9 @@ class MainWindow(QMainWindow):
         self.scroll_books.setWidget(
             self.book_container
         )
-
+        right.addWidget(
+            self.statistics_page
+        )
         right.addWidget(
             self.scroll_books
         )
@@ -184,7 +199,8 @@ class MainWindow(QMainWindow):
             right
         )
 
-        self.current_genre = "All Books"
+        self.current_status = None
+        self.current_genre = None
         self.current_sort = "Default"
         self.load_books()
 
@@ -423,7 +439,11 @@ class MainWindow(QMainWindow):
                 True
             )
 
-    def sidebar_clicked(self, item, column):
+    def sidebar_clicked(
+            self,
+            item,
+            column
+    ):
 
         data = item.data(
             0,
@@ -432,63 +452,93 @@ class MainWindow(QMainWindow):
 
         books = get_books()
 
-        # Top-level clicked
+        # -------------------------
+        # Top-level status
+        # -------------------------
+
         if data is None:
 
             text = item.text(0)
 
+            self.current_genre = None
+
             if "All Books" in text:
 
-                self.display_books(
-                    books
-                )
+                self.current_status = None
 
             elif "Read" in text:
 
+                self.current_status = "read"
+
                 books = [
-                    b for b in books
+                    b
+                    for b in books
                     if b["is_read"]
                 ]
 
-                self.display_books(
-                    books
-                )
-
             elif "Unread" in text:
 
+                self.current_status = "unread"
+
                 books = [
-                    b for b in books
+                    b
+                    for b in books
                     if not b["is_read"]
                 ]
 
-                self.display_books(
-                    books
-                )
+            self.show_books()
+
+            self.display_books(
+                books
+            )
 
             return
 
-        # Genre clicked
+        # -------------------------
+        # Genre
+        # -------------------------
+
         status, genre = data
 
         if status == "read":
 
+            self.current_status = "read"
+
             books = [
-                b for b in books
+                b
+                for b in books
                 if b["is_read"]
             ]
 
         elif status == "unread":
 
+            self.current_status = "unread"
+
             books = [
-                b for b in books
+                b
+                for b in books
                 if not b["is_read"]
             ]
 
-        if genre != "all":
+        else:
+
+            self.current_status = None
+
+        if genre == "all":
+
+            self.current_genre = None
+
+        else:
+
+            self.current_genre = genre
+
             books = [
-                b for b in books
+                b
+                for b in books
                 if b["genre"] == genre
             ]
+
+        self.show_books()
 
         self.display_books(
             books
@@ -540,5 +590,91 @@ class MainWindow(QMainWindow):
                 key=lambda x: x["pages"] or 0,
                 reverse=True
             )
+
+        return books
+
+    def show_books(self):
+
+        self.statistics_page.hide()
+
+        self.scroll_books.show()
+
+        self.search_bar.show()
+
+        self.sort_box.show()
+
+    def show_statistics(self):
+
+        self.scroll_books.hide()
+
+        self.statistics_page.show()
+
+        self.search_bar.hide()
+
+        self.sort_box.hide()
+
+        books = self.get_current_filter_books()
+
+        self.statistics_page.update_statistics(
+            books,
+            self.current_statistics_title()
+        )
+
+    def current_statistics_title(self):
+
+        if self.current_status == "read":
+
+            if self.current_genre:
+                return (
+                    f"Read → {self.current_genre}"
+                    " Statistics"
+                )
+
+            return "Read Books Statistics"
+
+        if self.current_status == "unread":
+
+            if self.current_genre:
+                return (
+                    f"Unread → {self.current_genre}"
+                    " Statistics"
+                )
+
+            return "Unread Books Statistics"
+
+        if self.current_genre:
+            return (
+                f"{self.current_genre}"
+                " Statistics"
+            )
+
+        return "Library Statistics"
+
+    def get_current_filter_books(self):
+
+        books = get_books()
+
+        if self.current_status == "read":
+
+            books = [
+                book
+                for book in books
+                if book["is_read"]
+            ]
+
+        elif self.current_status == "unread":
+
+            books = [
+                book
+                for book in books
+                if not book["is_read"]
+            ]
+
+        if self.current_genre:
+            books = [
+                book
+                for book in books
+                if book["genre"] == self.current_genre
+            ]
 
         return books

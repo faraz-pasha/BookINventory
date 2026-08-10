@@ -590,3 +590,88 @@ QLabel#bookTitle {
 #bookDetails QPushButton:hover {
     background-color: #354F52;
 }
+
+
+/* =========================
+   Statistics Page
+   ========================= */
+
+#statisticsPage {
+    background-color: #E4EBDD;
+}
+
+
+#statisticsTitle {
+    font-size: 28px;
+    font-weight: bold;
+    color: #2F3E46;
+}
+
+
+#statCard {
+    background-color: #F7FAF5;
+    border-radius: 16px;
+    border: 1px solid #CAD2C5;
+    min-height: 110px;
+}
+
+
+#statValue {
+    font-size: 28px;
+    font-weight: bold;
+    color: #52796F;
+}
+
+
+#statLabel {
+    font-size: 14px;
+    color: #555555;
+}
+
+
+#statisticsSection {
+    background-color: #F7FAF5;
+    border-radius: 16px;
+    border: 1px solid #CAD2C5;
+    padding: 10px;
+}
+
+
+#statisticsSectionTitle {
+    font-size: 18px;
+    font-weight: bold;
+    color: #354F52;
+    margin-bottom: 8px;
+}
+
+
+#statisticsPage QProgressBar {
+    border: none;
+    border-radius: 8px;
+    background-color: #D8E2DC;
+    height: 22px;
+    text-align: center;
+}
+
+
+#statisticsPage QProgressBar::chunk {
+    background-color: #84A98C;
+    border-radius: 8px;
+}
+
+
+#highlightLabel {
+    font-weight: bold;
+    color: #52796F;
+    min-width: 150px;
+}
+
+#statisticsScrollContent {
+    background-color: #E4EBDD;
+}
+
+
+#statisticsPage QScrollArea {
+    border: none;
+    background-color: #E4EBDD;
+}
