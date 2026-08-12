@@ -1,7 +1,6 @@
 from PySide6.QtWidgets import *
 from PySide6.QtGui import *
 from PySide6.QtCore import *
-from PySide6.QtCore import Qt, Signal
 
 
 class BookCard(QFrame):
@@ -19,14 +18,32 @@ class BookCard(QFrame):
             "bookCard"
         )
 
-        # Read/unread styling property
+        # -------------------
+        # Reading status
+        # -------------------
+
+        self.reading_status = book.get(
+            "reading_status",
+            "finished"
+            if book.get("is_read")
+            else "want_to_read"
+        )
+
+        # -------------------
+        # Card styling property
+        # -------------------
+
         self.setProperty(
             "status",
-            "read" if book["is_read"] else "unread"
+            self.reading_status
         )
 
         self.style().unpolish(self)
         self.style().polish(self)
+
+        # -------------------
+        # Card size
+        # -------------------
 
         self.setFixedSize(
             200,
@@ -50,7 +67,6 @@ class BookCard(QFrame):
             Qt.AlignTop
         )
 
-
         # -------------------
         # Cover
         # -------------------
@@ -65,7 +81,6 @@ class BookCard(QFrame):
         cover.setAlignment(
             Qt.AlignCenter
         )
-
 
         if book["cover"]:
 
@@ -90,12 +105,10 @@ class BookCard(QFrame):
                 "No Cover"
             )
 
-
         layout.addWidget(
             cover,
             alignment=Qt.AlignTop | Qt.AlignHCenter
         )
-
 
         # -------------------
         # Title
@@ -125,11 +138,9 @@ class BookCard(QFrame):
             65
         )
 
-
         layout.addWidget(
             title
         )
-
 
         # -------------------
         # Author
@@ -138,6 +149,7 @@ class BookCard(QFrame):
         author = QLabel(
             book["author"]
         )
+
         author.setWordWrap(
             True
         )
@@ -150,14 +162,26 @@ class BookCard(QFrame):
             author
         )
 
-
         # -------------------
         # Rating
         # -------------------
 
-        stars = QLabel(
-            "★" * book["rating"]
-        )
+        rating = book.get(
+            "rating",
+            0
+        ) or 0
+
+        if rating > 0:
+
+            stars = QLabel(
+                "★" * rating
+            )
+
+        else:
+
+            stars = QLabel(
+                "No Rating"
+            )
 
         stars.setAlignment(
             Qt.AlignCenter
@@ -166,7 +190,6 @@ class BookCard(QFrame):
         layout.addWidget(
             stars
         )
-
 
         # -------------------
         # Genre
@@ -184,16 +207,27 @@ class BookCard(QFrame):
             genre
         )
 
+        # -------------------
+        # Reading Status
+        # -------------------
 
-        # -------------------
-        # Status
-        # -------------------
+        status_text = {
+
+            "want_to_read":
+                "📚 Want to Read",
+
+            "currently_reading":
+                "📖 Currently Reading",
+
+            "finished":
+                "✓ Finished"
+        }
 
         status = QLabel(
-            "✓ Read"
-            if book["is_read"]
-            else
-            "Unread"
+            status_text.get(
+                self.reading_status,
+                "📚 Want to Read"
+            )
         )
 
         status.setAlignment(
@@ -204,9 +238,15 @@ class BookCard(QFrame):
             status
         )
 
-
-    def mouseDoubleClickEvent(self, event):
+    def mouseDoubleClickEvent(
+        self,
+        event
+    ):
 
         self.details_requested.emit(
             self.book
+        )
+
+        super().mouseDoubleClickEvent(
+            event
         )

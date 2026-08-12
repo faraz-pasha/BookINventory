@@ -137,12 +137,30 @@ class BookDetails(QDialog):
             ("★" * book["rating"])
         )
 
+        reading_status = book.get(
+            "reading_status",
+            "finished"
+            if book.get("is_read")
+            else "want_to_read"
+        )
+
+        status_text = {
+            "want_to_read":
+                "📚 Want to Read",
+
+            "currently_reading":
+                "📖 Currently Reading",
+
+            "finished":
+                "✅ Finished"
+        }
 
         status = QLabel(
-            "✓ Read"
-            if book["is_read"]
-            else
-            "Unread"
+            "Status: " +
+            status_text.get(
+                reading_status,
+                "Want to Read"
+            )
         )
 
         status.setObjectName(

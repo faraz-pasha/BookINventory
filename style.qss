@@ -675,3 +675,22 @@ QLabel#bookTitle {
     border: none;
     background-color: #E4EBDD;
 }
+
+QFrame#bookCard {
+    border-radius: 12px;
+}
+
+QFrame#bookCard[status="want_to_read"] {
+    background-color: #f3d6d6;
+    border: 1px solid #dfb5b5;
+}
+
+QFrame#bookCard[status="currently_reading"] {
+    background-color: #f3e3c3;
+    border: 1px solid #dfcc9e;
+}
+
+QFrame#bookCard[status="finished"] {
+    background-color: #d8ead9;
+    border: 1px solid #b8d5bb;
+}

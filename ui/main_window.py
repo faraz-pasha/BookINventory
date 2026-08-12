@@ -8,9 +8,10 @@ from database import (
     get_books,
     update_book,
     delete_book,
-    find_books,
+
     get_genre_counts
 )
+from PySide6.QtCore import QTimer
 from ui.book_details import BookDetails
 from ui.statistics_page import StatisticsPage
 
@@ -136,6 +137,14 @@ class MainWindow(QMainWindow):
             self.show_statistics
         )
 
+        books_button = QPushButton(
+            "📚 Books"
+        )
+
+        books_button.clicked.connect(
+            self.show_books
+        )
+
         button.clicked.connect(
             self.add_book
         )
@@ -146,6 +155,10 @@ class MainWindow(QMainWindow):
 
         top_bar.addWidget(
             self.sort_box
+        )
+
+        top_bar.addWidget(
+            books_button
         )
 
         top_bar.addWidget(
@@ -177,7 +190,7 @@ class MainWindow(QMainWindow):
             20,
             20
         )
-        self.grid.setSpacing(20)
+        self.grid.setSpacing(10)
 
         self.scroll_books = QScrollArea()
 
@@ -199,10 +212,16 @@ class MainWindow(QMainWindow):
             right
         )
 
-        self.current_status = None
-        self.current_genre = None
+        self.current_status = "all"
+        self.current_genre = "all"
+        self.current_search = ""
         self.current_sort = "Default"
-        self.load_books()
+
+        QTimer.singleShot(
+            0,
+            self.load_books
+        )
+
 
 
 
@@ -229,10 +248,12 @@ class MainWindow(QMainWindow):
         )
 
     def display_books(self, books):
-        self.current_books = self.apply_sort(
+
+        books = self.apply_sort(
             books
         )
-        books = self.current_books
+
+        self.current_books = books
         # Clear old cards
         while self.grid.count():
 
@@ -251,7 +272,9 @@ class MainWindow(QMainWindow):
 
         columns = max(
             1,
-            available_width // self.card_width
+            available_width // (
+                    self.card_width + 10
+            )
         )
 
         row = 0
@@ -301,10 +324,11 @@ class MainWindow(QMainWindow):
 
         super().resizeEvent(event)
 
-        if hasattr(self, "current_books"):
-            self.display_books(
-                self.current_books
-            )
+        if hasattr(
+                self,
+                "scroll_books"
+        ):
+            self.load_books()
 
     def show_details(self, book):
 
@@ -334,42 +358,9 @@ class MainWindow(QMainWindow):
 
     def search_books(self, text):
 
-        books = self.get_current_filter_books()
+        self.current_search = text
 
-        text = text.strip().lower()
-
-        if text:
-            books = [
-                book
-                for book in books
-                if (
-                        text in (
-                        book["title"] or ""
-                ).lower()
-
-                        or
-
-                        text in (
-                                book["author"] or ""
-                        ).lower()
-
-                        or
-
-                        text in (
-                                book["genre"] or ""
-                        ).lower()
-
-                        or
-
-                        text in (
-                                book["notes"] or ""
-                        ).lower()
-                )
-            ]
-
-        self.display_books(
-            self.apply_sort(books)
-        )
+        self.load_books()
 
     def update_shelves(self):
 
@@ -379,8 +370,9 @@ class MainWindow(QMainWindow):
 
         sections = [
             ("📚 All Books", "all"),
-            ("✅ Read", "read"),
-            ("📖 Unread", "unread")
+            ("📚 Want to Read", "want_to_read"),
+            ("📖 Currently Reading", "currently_reading"),
+            ("✅ Finished", "finished")
         ]
 
         for name, status in sections:
@@ -393,25 +385,44 @@ class MainWindow(QMainWindow):
                 parent
             )
 
-            if status == "read":
+            # -------------------------
+            # Filter by reading status
+            # -------------------------
+
+            if status == "want_to_read":
 
                 filtered = [
-                    b for b in books
-                    if b["is_read"]
+                    book
+                    for book in books
+                    if book["reading_status"]
+                       == "want_to_read"
                 ]
 
-            elif status == "unread":
+            elif status == "currently_reading":
 
                 filtered = [
-                    b for b in books
-                    if not b["is_read"]
+                    book
+                    for book in books
+                    if book["reading_status"]
+                       == "currently_reading"
+                ]
+
+            elif status == "finished":
+
+                filtered = [
+                    book
+                    for book in books
+                    if book["reading_status"]
+                       == "finished"
                 ]
 
             else:
 
                 filtered = books
 
-            # All genres option
+            # -------------------------
+            # All Genres
+            # -------------------------
 
             all_item = QTreeWidgetItem(
                 [
@@ -429,14 +440,20 @@ class MainWindow(QMainWindow):
                 all_item
             )
 
+            # -------------------------
+            # Genre counts
+            # -------------------------
+
             genres = {}
 
             for book in filtered:
+
                 genre = book["genre"]
 
-                genres[genre] = (
-                        genres.get(genre, 0) + 1
-                )
+                if genre:
+                    genres[genre] = (
+                            genres.get(genre, 0) + 1
+                    )
 
             for genre, count in sorted(
                     genres.items()
@@ -472,144 +489,23 @@ class MainWindow(QMainWindow):
             Qt.UserRole
         )
 
-        books = get_books()
-
-        # -------------------------
-        # Top-level status
-        # -------------------------
-
         if data is None:
-
-            text = item.text(0)
-
-            self.current_genre = None
-
-            if "All Books" in text:
-
-                self.current_status = None
-
-            elif "Read" in text:
-
-                self.current_status = "read"
-
-                books = [
-                    b
-                    for b in books
-                    if b["is_read"]
-                ]
-
-            elif "Unread" in text:
-
-                self.current_status = "unread"
-
-                books = [
-                    b
-                    for b in books
-                    if not b["is_read"]
-                ]
-
-            self.show_books()
-
-            self.display_books(
-                books
-            )
-
             return
-
-        # -------------------------
-        # Genre
-        # -------------------------
 
         status, genre = data
 
-        if status == "read":
+        self.current_status = status
 
-            self.current_status = "read"
+        self.current_genre = genre
 
-            books = [
-                b
-                for b in books
-                if b["is_read"]
-            ]
-
-        elif status == "unread":
-
-            self.current_status = "unread"
-
-            books = [
-                b
-                for b in books
-                if not b["is_read"]
-            ]
-
-        else:
-
-            self.current_status = None
-
-        if genre == "all":
-
-            self.current_genre = None
-
-        else:
-
-            self.current_genre = genre
-
-            books = [
-                b
-                for b in books
-                if b["genre"] == genre
-            ]
-
-        self.show_books()
-
-        self.display_books(
-            books
-        )
+        # Update the books
+        self.load_books()
 
     def sort_books(self, option):
 
         self.current_sort = option
 
-        books = self.get_current_filter_books()
-
-        search_text = (
-            self.search_bar.text()
-            .strip()
-            .lower()
-        )
-
-        if search_text:
-            books = [
-                book
-                for book in books
-                if (
-                        search_text in (
-                        book["title"] or ""
-                ).lower()
-
-                        or
-
-                        search_text in (
-                                book["author"] or ""
-                        ).lower()
-
-                        or
-
-                        search_text in (
-                                book["genre"] or ""
-                        ).lower()
-
-                        or
-
-                        search_text in (
-                                book["notes"] or ""
-                        ).lower()
-                )
-            ]
-
-        self.display_books(
-            self.apply_sort(books)
-        )
+        self.load_books()
 
     def apply_sort(self, books):
 
@@ -675,59 +571,107 @@ class MainWindow(QMainWindow):
 
     def current_statistics_title(self):
 
-        if self.current_status == "read":
+        status_names = {
+            "want_to_read":
+                "Want to Read",
 
-            if self.current_genre:
+            "currently_reading":
+                "Currently Reading",
+
+            "finished":
+                "Finished"
+        }
+
+        status_name = status_names.get(
+            self.current_status
+        )
+
+        if status_name:
+
+            if self.current_genre != "all":
                 return (
-                    f"Read → {self.current_genre}"
-                    " Statistics"
+                    f"{status_name} → "
+                    f"{self.current_genre} "
+                    "Statistics"
                 )
 
-            return "Read Books Statistics"
-
-        if self.current_status == "unread":
-
-            if self.current_genre:
-                return (
-                    f"Unread → {self.current_genre}"
-                    " Statistics"
-                )
-
-            return "Unread Books Statistics"
-
-        if self.current_genre:
             return (
-                f"{self.current_genre}"
-                " Statistics"
+                f"{status_name} "
+                "Statistics"
+            )
+
+        if self.current_genre != "all":
+            return (
+                f"{self.current_genre} "
+                "Statistics"
             )
 
         return "Library Statistics"
-
     def get_current_filter_books(self):
 
         books = get_books()
 
-        if self.current_status == "read":
+        # -------------------------
+        # Reading status
+        # -------------------------
 
+        if self.current_status != "all":
             books = [
                 book
                 for book in books
-                if book["is_read"]
+                if book["reading_status"]
+                   == self.current_status
             ]
 
-        elif self.current_status == "unread":
+        # -------------------------
+        # Genre
+        # -------------------------
 
+        if self.current_genre != "all":
             books = [
                 book
                 for book in books
-                if not book["is_read"]
+                if book["genre"]
+                   == self.current_genre
             ]
 
-        if self.current_genre:
+        # -------------------------
+        # Search
+        # -------------------------
+
+        if self.current_search:
+            search_text = (
+                self.current_search
+                .strip()
+                .lower()
+            )
+
             books = [
                 book
                 for book in books
-                if book["genre"] == self.current_genre
+                if (
+                        search_text in (
+                        book["title"] or ""
+                ).lower()
+
+                        or
+
+                        search_text in (
+                                book["author"] or ""
+                        ).lower()
+
+                        or
+
+                        search_text in (
+                                book["genre"] or ""
+                        ).lower()
+
+                        or
+
+                        search_text in (
+                                book["notes"] or ""
+                        ).lower()
+                )
             ]
 
         return books

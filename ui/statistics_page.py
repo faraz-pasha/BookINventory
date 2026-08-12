@@ -243,30 +243,51 @@ class StatisticsPage(QWidget):
 
         total = len(books)
 
-        read = sum(
+        want_to_read = sum(
             1
             for book in books
-            if book["is_read"]
+            if book["reading_status"]
+            == "want_to_read"
         )
 
-        unread = total - read
+        currently_reading = sum(
+            1
+            for book in books
+            if book["reading_status"]
+            == "currently_reading"
+        )
+
+        finished = sum(
+            1
+            for book in books
+            if book["reading_status"]
+            == "finished"
+        )
 
         total_pages = sum(
             book["pages"] or 0
             for book in books
         )
 
-        ratings = [
-            book["rating"] or 0
+        rated_books = [
+            book
             for book in books
-            if book["rating"] is not None
+            if (book["rating"] or 0) > 0
         ]
 
-        average_rating = (
-            sum(ratings) / len(ratings)
-            if ratings
-            else 0
-        )
+        if rated_books:
+
+            average_rating = (
+                    sum(
+                        book["rating"]
+                        for book in rated_books
+                    )
+                    / len(rated_books)
+            )
+
+        else:
+
+            average_rating = None
 
 
         # -------------------------
@@ -288,15 +309,22 @@ class StatisticsPage(QWidget):
 
         cards.addWidget(
             self.create_stat_card(
-                read,
-                "Read"
+                want_to_read,
+                "Want to Read"
             )
         )
 
         cards.addWidget(
             self.create_stat_card(
-                unread,
-                "Unread"
+                currently_reading,
+                "Currently Reading"
+            )
+        )
+
+        cards.addWidget(
+            self.create_stat_card(
+                finished,
+                "Finished"
             )
         )
 
@@ -309,7 +337,11 @@ class StatisticsPage(QWidget):
 
         cards.addWidget(
             self.create_stat_card(
-                f"{average_rating:.1f} ★",
+                (
+    f"{average_rating:.1f} ★"
+    if average_rating is not None
+    else "N/A"
+),
                 "Average Rating"
             )
         )
@@ -337,12 +369,13 @@ class StatisticsPage(QWidget):
         )
 
         progress.setValue(
-            read
+            finished
         )
 
         progress.setFormat(
-            f"{read} / {total} books read"
+            f"{finished} / {total} books finished"
         )
+
 
         progress.setTextVisible(
             True
@@ -542,13 +575,27 @@ class StatisticsPage(QWidget):
 
 
         if books:
+            rated_books = [
+                book
+                for book in books
+                if (book["rating"] or 0) > 0
+            ]
 
-            highest_rated = max(
-                books,
-                key=lambda b: (
-                    b["rating"] or 0
+            if rated_books:
+
+                highest_rated = max(
+                    rated_books,
+                    key=lambda b: b["rating"]
                 )
-            )
+
+                highest_rated_text = (
+                    f"{highest_rated['title']} "
+                    f"({highest_rated['rating']} ★)"
+                )
+
+            else:
+
+                highest_rated_text = "No rated books"
 
             longest_book = max(
                 books,
@@ -570,8 +617,7 @@ class StatisticsPage(QWidget):
             highlights = [
                 (
                     "⭐ Highest Rated",
-                    f"{highest_rated['title']} "
-                    f"({highest_rated['rating']} ★)"
+                    highest_rated_text
                 ),
                 (
                     "📖 Longest Book",

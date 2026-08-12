@@ -10,9 +10,10 @@ class AddBookDialog(QDialog):
         self.setObjectName("addBookDialog")
         self.book = book
         self.setWindowTitle(
-            "Add Book"
+            "Edit Book"
+            if book
+            else "Add Book"
         )
-
         self.resize(400,500)
 
 
@@ -52,7 +53,7 @@ class AddBookDialog(QDialog):
         self.pages = QSpinBox()
 
         self.pages.setRange(
-            1,
+            0,
             10000
         )
 
@@ -70,10 +71,13 @@ class AddBookDialog(QDialog):
             self.select_cover
         )
 
+        self.reading_status = QComboBox()
 
-        self.read = QCheckBox(
-            "I have read this book"
-        )
+        self.reading_status.addItems([
+            "Want to Read",
+            "Currently Reading",
+            "Finished"
+        ])
 
 
         self.notes = QTextEdit()
@@ -119,11 +123,13 @@ class AddBookDialog(QDialog):
             browse
         )
 
-
         layout.addWidget(
-            self.read
+            QLabel("Reading Status")
         )
 
+        layout.addWidget(
+            self.reading_status
+        )
 
         layout.addWidget(
             QLabel("Notes")
@@ -183,8 +189,26 @@ class AddBookDialog(QDialog):
             book["rating"]
         )
 
-        self.read.setChecked(
-            bool(book["is_read"])
+        status = book.get("reading_status")
+
+        if not status:
+            status = (
+                "finished"
+                if book["is_read"]
+                else "want_to_read"
+            )
+
+        status_map = {
+            "want_to_read": "Want to Read",
+            "currently_reading": "Currently Reading",
+            "finished": "Finished"
+        }
+
+        self.reading_status.setCurrentText(
+            status_map.get(
+                status,
+                "Want to Read"
+            )
         )
 
         self.cover.setText(
@@ -226,6 +250,16 @@ class AddBookDialog(QDialog):
 
             cover_path = str(destination)
 
+        status_map = {
+            "Want to Read": "want_to_read",
+            "Currently Reading": "currently_reading",
+            "Finished": "finished"
+        }
+
+        reading_status = status_map[
+            self.reading_status.currentText()
+        ]
+
         return {
 
             "title": self.title.text(),
@@ -242,13 +276,14 @@ class AddBookDialog(QDialog):
             "pages": self.pages.value(),
 
             "is_read": int(
-                self.read.isChecked()
+                reading_status == "finished"
             ),
 
             "cover": cover_path,
 
-            "notes": self.notes.toPlainText()
+            "notes": self.notes.toPlainText(),
 
+            "reading_status": reading_status
         }
 
     def genre_changed(self, text):
