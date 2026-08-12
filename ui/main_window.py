@@ -222,8 +222,10 @@ class MainWindow(QMainWindow):
 
     def load_books(self):
 
+        books = self.get_current_filter_books()
+
         self.display_books(
-            get_books()
+            books
         )
 
     def display_books(self, books):
@@ -329,20 +331,40 @@ class MainWindow(QMainWindow):
         self.update_shelves()
 
         self.load_books()
+
     def search_books(self, text):
 
-        if text.strip():
+        books = self.get_current_filter_books()
 
-            books = find_books(text)
+        text = text.strip().lower()
 
-        else:
-
-            books = get_books()
-
-        if self.current_genre != "All Books":
+        if text:
             books = [
-                b for b in books
-                if b["genre"] == self.current_genre
+                book
+                for book in books
+                if (
+                        text in (
+                        book["title"] or ""
+                ).lower()
+
+                        or
+
+                        text in (
+                                book["author"] or ""
+                        ).lower()
+
+                        or
+
+                        text in (
+                                book["genre"] or ""
+                        ).lower()
+
+                        or
+
+                        text in (
+                                book["notes"] or ""
+                        ).lower()
+                )
             ]
 
         self.display_books(
@@ -548,14 +570,45 @@ class MainWindow(QMainWindow):
 
         self.current_sort = option
 
-        books = self.current_books.copy()
+        books = self.get_current_filter_books()
 
-        books = self.apply_sort(
-            books
+        search_text = (
+            self.search_bar.text()
+            .strip()
+            .lower()
         )
 
+        if search_text:
+            books = [
+                book
+                for book in books
+                if (
+                        search_text in (
+                        book["title"] or ""
+                ).lower()
+
+                        or
+
+                        search_text in (
+                                book["author"] or ""
+                        ).lower()
+
+                        or
+
+                        search_text in (
+                                book["genre"] or ""
+                        ).lower()
+
+                        or
+
+                        search_text in (
+                                book["notes"] or ""
+                        ).lower()
+                )
+            ]
+
         self.display_books(
-            books
+            self.apply_sort(books)
         )
 
     def apply_sort(self, books):
