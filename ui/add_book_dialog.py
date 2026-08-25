@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import *
 import shutil
 from pathlib import Path
+from PySide6.QtCore import QDate
 
 class AddBookDialog(QDialog):
 
@@ -79,6 +80,34 @@ class AddBookDialog(QDialog):
             "Finished"
         ])
 
+        self.date_read_label = QLabel(
+            "Date Read"
+        )
+
+        self.date_read = QDateEdit()
+
+        self.date_read.setCalendarPopup(
+            True
+        )
+        self.date_read.calendarWidget().setObjectName(
+            "dateCalendar"
+        )
+
+        self.date_read.setDisplayFormat(
+            "MMM d, yyyy"
+        )
+
+        self.date_read.setDate(
+            QDate.currentDate()
+        )
+
+        self.date_read_label.hide()
+        self.date_read.hide()
+
+        self.reading_status.currentTextChanged.connect(
+            self.reading_status_changed
+        )
+
 
         self.notes = QTextEdit()
 
@@ -129,6 +158,14 @@ class AddBookDialog(QDialog):
 
         layout.addWidget(
             self.reading_status
+        )
+
+        layout.addWidget(
+            self.date_read_label
+        )
+
+        layout.addWidget(
+            self.date_read
         )
 
         layout.addWidget(
@@ -211,6 +248,26 @@ class AddBookDialog(QDialog):
             )
         )
 
+        date_read = book.get(
+            "date_read"
+        )
+
+        if date_read:
+
+            parsed_date = QDate.fromString(
+                date_read,
+                "yyyy-MM-dd"
+            )
+
+            if parsed_date.isValid():
+                self.date_read.setDate(
+                    parsed_date
+                )
+
+        self.reading_status_changed(
+            self.reading_status.currentText()
+        )
+
         self.cover.setText(
             book["cover"]
         )
@@ -260,6 +317,17 @@ class AddBookDialog(QDialog):
             self.reading_status.currentText()
         ]
 
+        if reading_status == "finished":
+
+            date_read = (
+                self.date_read.date()
+                .toString("yyyy-MM-dd")
+            )
+
+        else:
+
+            date_read = None
+
         return {
 
             "title": self.title.text(),
@@ -283,7 +351,9 @@ class AddBookDialog(QDialog):
 
             "notes": self.notes.toPlainText(),
 
-            "reading_status": reading_status
+            "reading_status": reading_status,
+
+            "date_read": date_read
         }
 
     def genre_changed(self, text):
@@ -295,3 +365,20 @@ class AddBookDialog(QDialog):
         else:
 
             self.custom_genre.hide()
+
+    def reading_status_changed(
+            self,
+            status
+    ):
+
+        is_finished = (
+                status == "Finished"
+        )
+
+        self.date_read_label.setVisible(
+            is_finished
+        )
+
+        self.date_read.setVisible(
+            is_finished
+        )

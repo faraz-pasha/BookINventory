@@ -1,6 +1,8 @@
 from PySide6.QtWidgets import *
 from PySide6.QtGui import *
 from PySide6.QtCore import Qt, Signal
+from datetime import datetime
+
 
 class BookDetails(QDialog):
 
@@ -172,6 +174,28 @@ class BookDetails(QDialog):
             "read" if book["is_read"] else "unread"
         )
 
+        date_added = QLabel(
+            "Date Added: "
+            + self.format_date(
+                book.get("date_added")
+            )
+        )
+
+        date_read = QLabel()
+
+        if book.get("date_read"):
+
+            date_read.setText(
+                "Date Read: "
+                + self.format_date(
+                    book["date_read"]
+                )
+            )
+
+        else:
+
+            date_read.hide()
+
 
         info_layout.addWidget(
             title
@@ -195,6 +219,14 @@ class BookDetails(QDialog):
 
         info_layout.addWidget(
             status
+        )
+
+        info_layout.addWidget(
+            date_added
+        )
+
+        info_layout.addWidget(
+            date_read
         )
 
         info_layout.addStretch()
@@ -323,3 +355,23 @@ class BookDetails(QDialog):
             )
 
             self.close()
+
+    def format_date(self, date_string):
+
+        if not date_string:
+            return "Unknown"
+
+        try:
+
+            date = datetime.strptime(
+                date_string,
+                "%Y-%m-%d"
+            )
+
+            return date.strftime(
+                "%b %d, %Y"
+            )
+
+        except ValueError:
+
+            return date_string

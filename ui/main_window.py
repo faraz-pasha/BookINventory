@@ -89,9 +89,6 @@ class MainWindow(QMainWindow):
         # Right side
         # -----------------
 
-        right = QVBoxLayout()
-
-        top_bar = QHBoxLayout()
 
         # Right side
 
@@ -109,15 +106,37 @@ class MainWindow(QMainWindow):
 
         self.sort_box.addItems([
             "Default",
-            "Title A-Z",
-            "Author A-Z",
-            "Rating High-Low",
-            "Pages High-Low"
+            "Title",
+            "Author",
+            "Rating",
+            "Pages",
+            "Date Added",
+            "Date Read"
         ])
+
 
         self.sort_box.currentTextChanged.connect(
             self.sort_books
         )
+
+        self.sort_direction = "asc"
+
+        self.sort_direction_button = QPushButton(
+            "↑"
+        )
+
+        self.sort_direction_button.setFixedWidth(
+            40
+        )
+
+        self.sort_direction_button.setToolTip(
+            "Change sort direction"
+        )
+
+        self.sort_direction_button.clicked.connect(
+            self.toggle_sort_direction
+        )
+
         self.search_bar.setClearButtonEnabled(
             True
         )
@@ -126,9 +145,14 @@ class MainWindow(QMainWindow):
             self.search_books
         )
 
+        sort_label = QLabel(
+            "Sort by:"
+        )
+
         button = QPushButton(
             "+ Add Book"
         )
+
 
         statistics_button = QPushButton(
             "📊 Statistics"
@@ -161,7 +185,15 @@ class MainWindow(QMainWindow):
         )
 
         top_bar.addWidget(
+            sort_label
+        )
+
+        top_bar.addWidget(
             self.sort_box
+        )
+
+        top_bar.addWidget(
+            self.sort_direction_button
         )
 
         top_bar.addWidget(
@@ -527,39 +559,95 @@ class MainWindow(QMainWindow):
 
         self.current_sort = option
 
+        if option in [
+            "Rating",
+            "Pages",
+            "Date Added",
+            "Date Read"
+        ]:
+
+            self.sort_direction = "desc"
+
+            self.sort_direction_button.setText(
+                "↓"
+            )
+
+        else:
+
+            self.sort_direction = "asc"
+
+            self.sort_direction_button.setText(
+                "↑"
+            )
+
         self.load_books()
 
     def apply_sort(self, books):
 
-        if self.current_sort == "Title A-Z":
+        reverse = (
+                self.sort_direction
+                == "desc"
+        )
+
+        if self.current_sort == "Title":
 
             books.sort(
-                key=lambda x: x["title"].lower()
+                key=lambda x: (
+                        x["title"] or ""
+                ).lower(),
+                reverse=reverse
             )
 
 
-        elif self.current_sort == "Author A-Z":
+        elif self.current_sort == "Author":
 
             books.sort(
                 key=lambda x: (
                         x["author"] or ""
-                ).lower()
+                ).lower(),
+                reverse=reverse
             )
 
 
-        elif self.current_sort == "Rating High-Low":
+        elif self.current_sort == "Rating":
 
             books.sort(
-                key=lambda x: x["rating"],
-                reverse=True
+                key=lambda x: (
+                        x["rating"] or 0
+                ),
+                reverse=reverse
             )
 
 
-        elif self.current_sort == "Pages High-Low":
+        elif self.current_sort == "Pages":
 
             books.sort(
-                key=lambda x: x["pages"] or 0,
-                reverse=True
+                key=lambda x: (
+                        x["pages"] or 0
+                ),
+                reverse=reverse
+            )
+
+
+        elif self.current_sort == "Date Added":
+
+            books.sort(
+                key=lambda x: (
+                        x.get("date_added")
+                        or ""
+                ),
+                reverse=reverse
+            )
+
+
+        elif self.current_sort == "Date Read":
+
+            books.sort(
+                key=lambda x: (
+                        x.get("date_read")
+                        or ""
+                ),
+                reverse=reverse
             )
 
         return books
@@ -718,3 +806,23 @@ class MainWindow(QMainWindow):
             ]
 
         return books
+
+    def toggle_sort_direction(self):
+
+        if self.sort_direction == "asc":
+
+            self.sort_direction = "desc"
+
+            self.sort_direction_button.setText(
+                "↓"
+            )
+
+        else:
+
+            self.sort_direction = "asc"
+
+            self.sort_direction_button.setText(
+                "↑"
+            )
+
+        self.load_books()

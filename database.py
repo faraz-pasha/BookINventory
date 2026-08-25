@@ -1,5 +1,6 @@
 import sqlite3
 from pathlib import Path
+from datetime import date
 
 IMAGE_PATH = Path("images")
 
@@ -95,6 +96,24 @@ def get_connection():
 
     conn.commit()
 
+    # Add date_added column
+    # if it does not already exist
+
+    if "date_added" not in column_names:
+        conn.execute("""
+            ALTER TABLE books
+            ADD COLUMN date_added TEXT
+        """)
+
+    # Add date_read column
+    # if it does not already exist
+
+    if "date_read" not in column_names:
+        conn.execute("""
+            ALTER TABLE books
+            ADD COLUMN date_read TEXT
+        """)
+
     return conn
 
 
@@ -114,23 +133,27 @@ def add_book(book):
             is_read,
             cover,
             notes,
-            reading_status
+            reading_status,
+            date_added,
+            date_read
         )
 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 
     """,
-    (
-        book["title"],
-        book["author"],
-        book["genre"],
-        book["rating"],
-        book["pages"],
-        book["is_read"],
-        book["cover"],
-        book["notes"],
-        book["reading_status"]
-    ))
+                 (
+                     book["title"],
+                     book["author"],
+                     book["genre"],
+                     book["rating"],
+                     book["pages"],
+                     book["is_read"],
+                     book["cover"],
+                     book["notes"],
+                     book["reading_status"],
+                     date.today().isoformat(),
+                     book.get("date_read")
+                 ))
 
     conn.commit()
 
@@ -165,22 +188,23 @@ def update_book(book_id, book):
             is_read=?,
             cover=?,
             notes=?,
-            reading_status=?
+            reading_status=?,
+            date_read=?
         WHERE id=?
     """,
-    (
-        book["title"],
-        book["author"],
-        book["genre"],
-        book["rating"],
-        book["pages"],
-        book["is_read"],
-        book["cover"],
-        book["notes"],
-        book["reading_status"],
-        book_id
-    ))
-
+                 (
+                     book["title"],
+                     book["author"],
+                     book["genre"],
+                     book["rating"],
+                     book["pages"],
+                     book["is_read"],
+                     book["cover"],
+                     book["notes"],
+                     book["reading_status"],
+                     book.get("date_read"),
+                     book_id
+                 ))
     conn.commit()
 
     conn.close()
