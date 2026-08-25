@@ -1,20 +1,41 @@
-from PySide6.QtWidgets import *
-from PySide6.QtCore import Qt
-from PySide6.QtCore import QSize
+from PySide6.QtWidgets import (
+    QMainWindow,
+    QWidget,
+    QHBoxLayout,
+    QVBoxLayout,
+    QTreeWidget,
+    QTreeWidgetItem,
+    QLineEdit,
+    QComboBox,
+    QPushButton,
+    QLabel,
+    QGridLayout,
+    QScrollArea,
+)
+
+from PySide6.QtCore import (
+    Qt,
+    QTimer,
+)
+
 from ui.add_book_dialog import AddBookDialog
 from ui.book_card import BookCard
+from ui.book_details import BookDetails
+from ui.statistics_page import StatisticsPage
+from ui.suggestion_page import SuggestionPage
+
 from database import (
     add_book,
     get_books,
     update_book,
     delete_book,
-
-    get_genre_counts
 )
-from PySide6.QtCore import QTimer
-from ui.book_details import BookDetails
-from ui.statistics_page import StatisticsPage
-from ui.suggestion_page import SuggestionPage
+
+from constants import (
+    STATUS_WANT_TO_READ,
+    STATUS_CURRENTLY_READING,
+    STATUS_FINISHED,
+)
 
 class MainWindow(QMainWindow):
 
@@ -424,9 +445,9 @@ class MainWindow(QMainWindow):
 
         sections = [
             ("📚 All Books", "all"),
-            ("📚 Want to Read", "want_to_read"),
-            ("📖 Currently Reading", "currently_reading"),
-            ("✅ Finished", "finished")
+            ("📚 Want to Read", STATUS_WANT_TO_READ),
+            ("📖 Currently Reading", STATUS_CURRENTLY_READING),
+            ("✅ Finished", STATUS_FINISHED),
         ]
 
         for name, status in sections:
@@ -443,31 +464,31 @@ class MainWindow(QMainWindow):
             # Filter by reading status
             # -------------------------
 
-            if status == "want_to_read":
+            if status == STATUS_WANT_TO_READ:
 
                 filtered = [
                     book
                     for book in books
                     if book["reading_status"]
-                       == "want_to_read"
+                       == STATUS_WANT_TO_READ
                 ]
 
-            elif status == "currently_reading":
+            elif status == STATUS_CURRENTLY_READING:
 
                 filtered = [
                     book
                     for book in books
                     if book["reading_status"]
-                       == "currently_reading"
+                       == STATUS_CURRENTLY_READING
                 ]
 
-            elif status == "finished":
+            elif status == STATUS_FINISHED:
 
                 filtered = [
                     book
                     for book in books
                     if book["reading_status"]
-                       == "finished"
+                       == STATUS_FINISHED
                 ]
 
             else:
@@ -703,13 +724,13 @@ class MainWindow(QMainWindow):
     def current_statistics_title(self):
 
         status_names = {
-            "want_to_read":
+            STATUS_WANT_TO_READ:
                 "Want to Read",
 
-            "currently_reading":
+            STATUS_CURRENTLY_READING:
                 "Currently Reading",
 
-            "finished":
+            STATUS_FINISHED:
                 "Finished"
         }
 

@@ -1,6 +1,23 @@
-from PySide6.QtWidgets import *
-from PySide6.QtGui import *
-from PySide6.QtCore import *
+from pathlib import Path
+
+from PySide6.QtWidgets import (
+    QFrame,
+    QVBoxLayout,
+    QLabel,
+)
+
+from PySide6.QtCore import (
+    Qt,
+    Signal,
+)
+
+from PySide6.QtGui import QPixmap
+
+from constants import (
+    STATUS_WANT_TO_READ,
+    STATUS_CURRENTLY_READING,
+    STATUS_FINISHED,
+)
 
 
 class BookCard(QFrame):
@@ -24,9 +41,9 @@ class BookCard(QFrame):
 
         self.reading_status = book.get(
             "reading_status",
-            "finished"
+            STATUS_FINISHED
             if book.get("is_read")
-            else "want_to_read"
+            else STATUS_WANT_TO_READ
         )
 
         # -------------------
@@ -38,8 +55,13 @@ class BookCard(QFrame):
             self.reading_status
         )
 
-        self.style().unpolish(self)
-        self.style().polish(self)
+        self.style().unpolish(
+            self
+        )
+
+        self.style().polish(
+            self
+        )
 
         # -------------------
         # Card size
@@ -50,7 +72,9 @@ class BookCard(QFrame):
             450
         )
 
-        layout = QVBoxLayout(self)
+        layout = QVBoxLayout(
+            self
+        )
 
         layout.setContentsMargins(
             10,
@@ -82,22 +106,46 @@ class BookCard(QFrame):
             Qt.AlignCenter
         )
 
-        if book["cover"]:
+        cover_path = book.get(
+            "cover"
+        )
 
-            pixmap = QPixmap(
-                book["cover"]
+        if cover_path:
+
+            path = Path(
+                cover_path
             )
 
-            pixmap = pixmap.scaled(
-                150,
-                220,
-                Qt.KeepAspectRatio,
-                Qt.SmoothTransformation
-            )
+            if path.exists():
 
-            cover.setPixmap(
-                pixmap
-            )
+                pixmap = QPixmap(
+                    str(path)
+                )
+
+                if not pixmap.isNull():
+
+                    pixmap = pixmap.scaled(
+                        150,
+                        220,
+                        Qt.KeepAspectRatio,
+                        Qt.SmoothTransformation
+                    )
+
+                    cover.setPixmap(
+                        pixmap
+                    )
+
+                else:
+
+                    cover.setText(
+                        "No Cover"
+                    )
+
+            else:
+
+                cover.setText(
+                    "No Cover"
+                )
 
         else:
 
@@ -208,19 +256,18 @@ class BookCard(QFrame):
         )
 
         # -------------------
-        # Reading Status
+        # Reading status
         # -------------------
 
         status_text = {
-
-            "want_to_read":
+            STATUS_WANT_TO_READ:
                 "📚 Want to Read",
 
-            "currently_reading":
+            STATUS_CURRENTLY_READING:
                 "📖 Currently Reading",
 
-            "finished":
-                "✓ Finished"
+            STATUS_FINISHED:
+                "✓ Finished",
         }
 
         status = QLabel(

@@ -20,7 +20,9 @@ from PySide6.QtCore import (
 from ui.book_card import BookCard
 from database import get_books
 
-
+from constants import (
+    STATUS_WANT_TO_READ,
+)
 class SuggestionPage(QWidget):
 
     details_requested = Signal(dict)
@@ -359,7 +361,7 @@ class SuggestionPage(QWidget):
                 book.get("genre")
                 and
                 book.get("reading_status")
-                == "want_to_read"
+                == STATUS_WANT_TO_READ
             )
         })
 

@@ -6,11 +6,14 @@ from PySide6.QtWidgets import (
     QFrame,
     QProgressBar,
     QScrollArea,
-    QSizePolicy
 )
-
 from PySide6.QtCore import Qt
 
+from constants import (
+    STATUS_WANT_TO_READ,
+    STATUS_CURRENTLY_READING,
+    STATUS_FINISHED,
+)
 
 class StatisticsPage(QWidget):
 
@@ -247,21 +250,21 @@ class StatisticsPage(QWidget):
             1
             for book in books
             if book["reading_status"]
-            == "want_to_read"
+            == STATUS_WANT_TO_READ
         )
 
         currently_reading = sum(
             1
             for book in books
             if book["reading_status"]
-            == "currently_reading"
+            == STATUS_CURRENTLY_READING
         )
 
         finished = sum(
             1
             for book in books
             if book["reading_status"]
-            == "finished"
+            == STATUS_FINISHED
         )
 
         total_pages = sum(

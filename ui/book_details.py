@@ -1,8 +1,27 @@
-from PySide6.QtWidgets import *
-from PySide6.QtGui import *
-from PySide6.QtCore import Qt, Signal
 from datetime import datetime
 
+from PySide6.QtWidgets import (
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QTextEdit,
+    QPushButton,
+    QMessageBox,
+)
+
+from PySide6.QtGui import QPixmap
+
+from PySide6.QtCore import (
+    Qt,
+    Signal,
+)
+
+from constants import (
+    STATUS_WANT_TO_READ,
+    STATUS_CURRENTLY_READING,
+    STATUS_FINISHED,
+)
 
 class BookDetails(QDialog):
 
@@ -141,19 +160,19 @@ class BookDetails(QDialog):
 
         reading_status = book.get(
             "reading_status",
-            "finished"
+            STATUS_FINISHED
             if book.get("is_read")
-            else "want_to_read"
+            else STATUS_WANT_TO_READ
         )
 
         status_text = {
-            "want_to_read":
+            STATUS_WANT_TO_READ:
                 "📚 Want to Read",
 
-            "currently_reading":
+            STATUS_CURRENTLY_READING:
                 "📖 Currently Reading",
 
-            "finished":
+            STATUS_FINISHED:
                 "✅ Finished"
         }
 

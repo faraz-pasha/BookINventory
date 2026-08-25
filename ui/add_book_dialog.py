@@ -1,28 +1,68 @@
-from PySide6.QtWidgets import *
 import shutil
 from pathlib import Path
+
+from PySide6.QtWidgets import (
+    QDialog,
+    QVBoxLayout,
+    QLabel,
+    QLineEdit,
+    QComboBox,
+    QSpinBox,
+    QDateEdit,
+    QTextEdit,
+    QPushButton,
+    QFileDialog,
+    QMessageBox,
+)
+
 from PySide6.QtCore import QDate
+from uuid import uuid4
+
+from constants import (
+    STATUS_WANT_TO_READ,
+    STATUS_CURRENTLY_READING,
+    STATUS_FINISHED,
+)
+
+
 
 class AddBookDialog(QDialog):
 
     def __init__(self, book=None):
 
         super().__init__()
-        self.setObjectName("addBookDialog")
+
+        self.setObjectName(
+            "addBookDialog"
+        )
+
         self.book = book
+
         self.setWindowTitle(
             "Edit Book"
             if book
             else "Add Book"
         )
-        self.resize(400,500)
 
+        self.resize(
+            400,
+            500
+        )
 
-        layout = QVBoxLayout(self)
+        layout = QVBoxLayout(
+            self
+        )
 
+        # -------------------------
+        # Title / Author
+        # -------------------------
 
         self.title = QLineEdit()
         self.author = QLineEdit()
+
+        # -------------------------
+        # Genre
+        # -------------------------
 
         self.genre = QComboBox()
 
@@ -34,7 +74,7 @@ class AddBookDialog(QDialog):
             "History",
             "Art",
             "Philosophy",
-            "Other"
+            "Other",
         ])
 
         self.genre.currentTextChanged.connect(
@@ -49,8 +89,17 @@ class AddBookDialog(QDialog):
 
         self.custom_genre.hide()
 
+        # -------------------------
+        # Rating / Pages
+        # -------------------------
+
         self.rating = QSpinBox()
-        self.rating.setRange(0,5)
+
+        self.rating.setRange(
+            0,
+            5
+        )
+
         self.pages = QSpinBox()
 
         self.pages.setRange(
@@ -62,6 +111,10 @@ class AddBookDialog(QDialog):
             100
         )
 
+        # -------------------------
+        # Cover
+        # -------------------------
+
         self.cover = QLineEdit()
 
         browse = QPushButton(
@@ -72,13 +125,25 @@ class AddBookDialog(QDialog):
             self.select_cover
         )
 
+        # -------------------------
+        # Reading status
+        # -------------------------
+
         self.reading_status = QComboBox()
 
         self.reading_status.addItems([
             "Want to Read",
             "Currently Reading",
-            "Finished"
+            "Finished",
         ])
+
+        self.reading_status.currentTextChanged.connect(
+            self.reading_status_changed
+        )
+
+        # -------------------------
+        # Date read
+        # -------------------------
 
         self.date_read_label = QLabel(
             "Date Read"
@@ -89,6 +154,7 @@ class AddBookDialog(QDialog):
         self.date_read.setCalendarPopup(
             True
         )
+
         self.date_read.calendarWidget().setObjectName(
             "dateCalendar"
         )
@@ -104,30 +170,40 @@ class AddBookDialog(QDialog):
         self.date_read_label.hide()
         self.date_read.hide()
 
-        self.reading_status.currentTextChanged.connect(
-            self.reading_status_changed
-        )
-
+        # -------------------------
+        # Notes
+        # -------------------------
 
         self.notes = QTextEdit()
 
+        # -------------------------
+        # Layout
+        # -------------------------
 
         layout.addWidget(
             QLabel("Title")
         )
-        layout.addWidget(self.title)
 
+        layout.addWidget(
+            self.title
+        )
 
         layout.addWidget(
             QLabel("Author")
         )
-        layout.addWidget(self.author)
 
+        layout.addWidget(
+            self.author
+        )
 
         layout.addWidget(
             QLabel("Genre")
         )
-        layout.addWidget(self.genre)
+
+        layout.addWidget(
+            self.genre
+        )
+
         layout.addWidget(
             self.custom_genre
         )
@@ -135,7 +211,11 @@ class AddBookDialog(QDialog):
         layout.addWidget(
             QLabel("Rating")
         )
-        layout.addWidget(self.rating)
+
+        layout.addWidget(
+            self.rating
+        )
+
         layout.addWidget(
             QLabel("Pages")
         )
@@ -176,33 +256,55 @@ class AddBookDialog(QDialog):
             self.notes
         )
 
-
         save = QPushButton(
             "Save"
         )
 
         save.clicked.connect(
-            self.accept
+            self.save_book
         )
 
-        layout.addWidget(save)
-        if book:
-            self.load_book(book)
+        layout.addWidget(
+            save
+        )
 
-    def load_book(self, book):
+        if book:
+            self.load_book(
+                book
+            )
+
+    # =====================================================
+    # Load existing book
+    # =====================================================
+
+    def load_book(
+        self,
+        book
+    ):
 
         self.title.setText(
-            book["title"]
+            book["title"] or ""
         )
 
         self.author.setText(
-            book["author"]
+            book["author"] or ""
         )
+
         self.pages.setValue(
-            book["pages"]
+            book["pages"] or 0
         )
-        index = self.genre.findText(
+
+        # -------------------------
+        # Genre
+        # -------------------------
+
+        genre = (
             book["genre"]
+            or ""
+        )
+
+        index = self.genre.findText(
+            genre
         )
 
         if index >= 0:
@@ -218,35 +320,56 @@ class AddBookDialog(QDialog):
             )
 
             self.custom_genre.setText(
-                book["genre"]
+                genre
             )
 
             self.custom_genre.show()
+
+        # -------------------------
+        # Rating
+        # -------------------------
+
         self.rating.setValue(
-            book["rating"]
+            book["rating"] or 0
         )
 
-        status = book.get("reading_status")
+        # -------------------------
+        # Reading status
+        # -------------------------
+
+        status = book.get(
+            "reading_status"
+        )
 
         if not status:
+
             status = (
-                "finished"
-                if book["is_read"]
-                else "want_to_read"
+                STATUS_FINISHED
+                if book.get("is_read")
+                else STATUS_WANT_TO_READ
             )
 
-        status_map = {
-            "want_to_read": "Want to Read",
-            "currently_reading": "Currently Reading",
-            "finished": "Finished"
+        status_display_map = {
+            STATUS_WANT_TO_READ:
+                "Want to Read",
+
+            STATUS_CURRENTLY_READING:
+                "Currently Reading",
+
+            STATUS_FINISHED:
+                "Finished",
         }
 
         self.reading_status.setCurrentText(
-            status_map.get(
+            status_display_map.get(
                 status,
                 "Want to Read"
             )
         )
+
+        # -------------------------
+        # Date read
+        # -------------------------
 
         date_read = book.get(
             "date_read"
@@ -260,6 +383,7 @@ class AddBookDialog(QDialog):
             )
 
             if parsed_date.isValid():
+
                 self.date_read.setDate(
                     parsed_date
                 )
@@ -268,18 +392,27 @@ class AddBookDialog(QDialog):
             self.reading_status.currentText()
         )
 
+        # -------------------------
+        # Cover / Notes
+        # -------------------------
+
         self.cover.setText(
-            book["cover"]
+            book["cover"] or ""
         )
 
         self.notes.setText(
-            book["notes"]
+            book["notes"] or ""
         )
 
+    # =====================================================
+    # Select cover
+    # =====================================================
 
-    def select_cover(self):
+    def select_cover(
+        self
+    ):
 
-        file,_ = QFileDialog.getOpenFileName(
+        file, _ = QFileDialog.getOpenFileName(
             self,
             "Select Image",
             "",
@@ -287,76 +420,213 @@ class AddBookDialog(QDialog):
         )
 
         if file:
-            self.cover.setText(file)
 
-    def get_data(self):
+            self.cover.setText(
+                file
+            )
+
+    # =====================================================
+    # Validate and save
+    # =====================================================
+
+    def save_book(
+        self
+    ):
+
+        title = (
+            self.title.text()
+            .strip()
+        )
+
+        if not title:
+
+            QMessageBox.warning(
+                self,
+                "Missing Title",
+                "Please enter a title."
+            )
+
+            self.title.setFocus()
+
+            return
+
+        if (
+            self.genre.currentText()
+            == "Other"
+            and not self.custom_genre.text().strip()
+        ):
+
+            QMessageBox.warning(
+                self,
+                "Missing Genre",
+                "Please enter a custom genre."
+            )
+
+            self.custom_genre.setFocus()
+
+            return
+
+        self.accept()
+
+    # =====================================================
+    # Return book data
+    # =====================================================
+
+    def get_data(
+        self
+    ):
 
         cover_path = ""
 
         if self.cover.text():
-            source = Path(self.cover.text())
 
-            destination = Path(
+            source = Path(
+                self.cover.text()
+            )
+
+            images_dir = Path(
                 "images"
-            ) / source.name
-            if source.resolve() != destination.resolve():
-                shutil.copy(
+            )
+
+            images_dir.mkdir(
+                parents=True,
+                exist_ok=True
+            )
+
+            # Keep existing library image path unchanged
+            if (
+                    source.parent.resolve()
+                    == images_dir.resolve()
+            ):
+
+                cover_path = str(
+                    source
+                )
+
+            else:
+
+                unique_name = (
+                    f"{uuid4().hex}"
+                    f"{source.suffix.lower()}"
+                )
+
+                destination = (
+                        images_dir
+                        / unique_name
+                )
+
+                shutil.copy2(
                     source,
                     destination
                 )
 
-            cover_path = str(destination)
+                cover_path = str(
+                    destination
+                )
+        # -------------------------
+        # UI text -> internal status
+        # -------------------------
 
         status_map = {
-            "Want to Read": "want_to_read",
-            "Currently Reading": "currently_reading",
-            "Finished": "finished"
+            "Want to Read":
+                STATUS_WANT_TO_READ,
+
+            "Currently Reading":
+                STATUS_CURRENTLY_READING,
+
+            "Finished":
+                STATUS_FINISHED,
         }
 
         reading_status = status_map[
             self.reading_status.currentText()
         ]
 
-        if reading_status == "finished":
+        # -------------------------
+        # Date read
+        # -------------------------
+
+        if (
+            reading_status
+            == STATUS_FINISHED
+        ):
 
             date_read = (
                 self.date_read.date()
-                .toString("yyyy-MM-dd")
+                .toString(
+                    "yyyy-MM-dd"
+                )
             )
 
         else:
 
             date_read = None
 
+        # -------------------------
+        # Genre
+        # -------------------------
+
+        if (
+            self.genre.currentText()
+            == "Other"
+        ):
+
+            genre = (
+                self.custom_genre.text()
+                .strip()
+            )
+
+        else:
+
+            genre = (
+                self.genre.currentText()
+            )
+
         return {
 
-            "title": self.title.text(),
+            "title":
+                self.title.text().strip(),
 
-            "author": self.author.text(),
+            "author":
+                self.author.text().strip(),
 
             "genre":
-                self.custom_genre.text()
-                if self.genre.currentText() == "Other"
-                else self.genre.currentText(),
+                genre,
 
-            "rating": self.rating.value(),
+            "rating":
+                self.rating.value(),
 
-            "pages": self.pages.value(),
+            "pages":
+                self.pages.value(),
 
-            "is_read": int(
-                reading_status == "finished"
-            ),
+            # Legacy compatibility
+            "is_read":
+                int(
+                    reading_status
+                    == STATUS_FINISHED
+                ),
 
-            "cover": cover_path,
+            "cover":
+                cover_path,
 
-            "notes": self.notes.toPlainText(),
+            "notes":
+                self.notes.toPlainText(),
 
-            "reading_status": reading_status,
+            "reading_status":
+                reading_status,
 
-            "date_read": date_read
+            "date_read":
+                date_read,
         }
 
-    def genre_changed(self, text):
+    # =====================================================
+    # Custom genre
+    # =====================================================
+
+    def genre_changed(
+        self,
+        text
+    ):
 
         if text == "Other":
 
@@ -366,13 +636,21 @@ class AddBookDialog(QDialog):
 
             self.custom_genre.hide()
 
+    # =====================================================
+    # Reading status changed
+    # =====================================================
+
     def reading_status_changed(
-            self,
-            status
+        self,
+        status
     ):
 
+        # `status` here is UI text,
+        # not the internal constant.
+
         is_finished = (
-                status == "Finished"
+            status
+            == "Finished"
         )
 
         self.date_read_label.setVisible(

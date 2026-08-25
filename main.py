@@ -4,16 +4,16 @@ from PySide6.QtWidgets import QApplication
 
 from ui.main_window import MainWindow
 
-from database import get_connection
+from database import initialize_database
 
 
-get_connection()
+initialize_database()
 
 
 app = QApplication(sys.argv)
 
 
-with open("style.qss","r") as file:
+with open("style.qss", "r") as file:
 
     app.setStyleSheet(
         file.read()

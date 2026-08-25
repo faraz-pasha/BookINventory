@@ -1,15 +1,24 @@
 import sqlite3
-from pathlib import Path
 from datetime import date
+from pathlib import Path
 
-IMAGE_PATH = Path("images")
+from constants import (
+    STATUS_WANT_TO_READ,
+    STATUS_FINISHED,
+)
+
 
 DB_PATH = Path("database/library.db")
 
 
+# ============================================================
+# Database connection
+# ============================================================
+
 def get_connection():
 
     DB_PATH.parent.mkdir(
+        parents=True,
         exist_ok=True
     )
 
@@ -19,110 +28,148 @@ def get_connection():
 
     conn.row_factory = sqlite3.Row
 
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS books(
+    return conn
 
+
+# ============================================================
+# Database initialization
+# ============================================================
+
+def initialize_database():
+
+    conn = get_connection()
+
+    conn.execute(f"""
+        CREATE TABLE IF NOT EXISTS books (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
 
             title TEXT NOT NULL,
             author TEXT,
-
             genre TEXT,
 
             rating INTEGER DEFAULT 0,
+            pages INTEGER DEFAULT 0,
 
             is_read INTEGER DEFAULT 0,
 
             cover TEXT,
-
             notes TEXT,
 
             reading_status TEXT
-                DEFAULT 'want_to_read'
+                DEFAULT '{STATUS_WANT_TO_READ}',
+
+            date_added TEXT,
+            date_read TEXT
         )
     """)
 
-    # -------------------------
-    # Database migrations
-    # -------------------------
+    migrate_database(
+        conn
+    )
+
+    conn.commit()
+    conn.close()
+
+
+# ============================================================
+# Database migrations
+# ============================================================
+
+def migrate_database(conn):
 
     columns = conn.execute(
         "PRAGMA table_info(books)"
     ).fetchall()
 
-    column_names = [
+    column_names = {
         column["name"]
         for column in columns
-    ]
+    }
 
-    # Add pages column if it
-    # does not already exist
+    # --------------------------------------------------------
+    # Pages
+    # --------------------------------------------------------
 
     if "pages" not in column_names:
 
         conn.execute("""
             ALTER TABLE books
-            ADD COLUMN pages INTEGER
-            DEFAULT 0
+            ADD COLUMN pages INTEGER DEFAULT 0
         """)
 
-    # Add reading_status column
-    # if it does not already exist
+    # --------------------------------------------------------
+    # Reading status
+    # --------------------------------------------------------
 
     if "reading_status" not in column_names:
-        conn.execute("""
+
+        conn.execute(f"""
             ALTER TABLE books
             ADD COLUMN reading_status TEXT
-            DEFAULT 'want_to_read'
+            DEFAULT '{STATUS_WANT_TO_READ}'
         """)
 
-    # -------------------------
-    # Migrate reading status
-    # -------------------------
-
-    conn.execute("""
-        UPDATE books
-        SET reading_status = 'finished'
-        WHERE reading_status IS NULL
-          AND is_read = 1
-    """)
-
-    conn.execute("""
-        UPDATE books
-        SET reading_status = 'want_to_read'
-        WHERE reading_status IS NULL
-          AND is_read = 0
-    """)
-
-    conn.commit()
-
-    # Add date_added column
-    # if it does not already exist
+    # --------------------------------------------------------
+    # Date added
+    # --------------------------------------------------------
 
     if "date_added" not in column_names:
+
         conn.execute("""
             ALTER TABLE books
             ADD COLUMN date_added TEXT
         """)
 
-    # Add date_read column
-    # if it does not already exist
+    # --------------------------------------------------------
+    # Date read
+    # --------------------------------------------------------
 
     if "date_read" not in column_names:
+
         conn.execute("""
             ALTER TABLE books
             ADD COLUMN date_read TEXT
         """)
 
-    return conn
+    # --------------------------------------------------------
+    # Convert old is_read values to reading_status
+    # --------------------------------------------------------
+
+    conn.execute(
+        """
+        UPDATE books
+        SET reading_status = ?
+        WHERE reading_status IS NULL
+          AND is_read = 1
+        """,
+        (
+            STATUS_FINISHED,
+        )
+    )
+
+    conn.execute(
+        """
+        UPDATE books
+        SET reading_status = ?
+        WHERE reading_status IS NULL
+          AND is_read = 0
+        """,
+        (
+            STATUS_WANT_TO_READ,
+        )
+    )
 
 
+# ============================================================
+# Add book
+# ============================================================
 
 def add_book(book):
 
     conn = get_connection()
 
-    conn.execute("""
+    conn.execute(
+        """
         INSERT INTO books
         (
             title,
@@ -137,29 +184,30 @@ def add_book(book):
             date_added,
             date_read
         )
-
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-
-    """,
-                 (
-                     book["title"],
-                     book["author"],
-                     book["genre"],
-                     book["rating"],
-                     book["pages"],
-                     book["is_read"],
-                     book["cover"],
-                     book["notes"],
-                     book["reading_status"],
-                     date.today().isoformat(),
-                     book.get("date_read")
-                 ))
+        """,
+        (
+            book["title"],
+            book["author"],
+            book["genre"],
+            book["rating"],
+            book["pages"],
+            book["is_read"],
+            book["cover"],
+            book["notes"],
+            book["reading_status"],
+            date.today().isoformat(),
+            book.get("date_read"),
+        )
+    )
 
     conn.commit()
-
     conn.close()
 
 
+# ============================================================
+# Get books
+# ============================================================
 
 def get_books():
 
@@ -171,43 +219,61 @@ def get_books():
 
     conn.close()
 
-    return [dict(row) for row in rows]
+    return [
+        dict(row)
+        for row in rows
+    ]
 
-def update_book(book_id, book):
+
+# ============================================================
+# Update book
+# ============================================================
+
+def update_book(
+    book_id,
+    book
+):
 
     conn = get_connection()
 
-    conn.execute("""
+    conn.execute(
+        """
         UPDATE books
         SET
-            title=?,
-            author=?,
-            genre=?,
-            rating=?,
-            pages=?,
-            is_read=?,
-            cover=?,
-            notes=?,
-            reading_status=?,
-            date_read=?
-        WHERE id=?
-    """,
-                 (
-                     book["title"],
-                     book["author"],
-                     book["genre"],
-                     book["rating"],
-                     book["pages"],
-                     book["is_read"],
-                     book["cover"],
-                     book["notes"],
-                     book["reading_status"],
-                     book.get("date_read"),
-                     book_id
-                 ))
-    conn.commit()
+            title = ?,
+            author = ?,
+            genre = ?,
+            rating = ?,
+            pages = ?,
+            is_read = ?,
+            cover = ?,
+            notes = ?,
+            reading_status = ?,
+            date_read = ?
+        WHERE id = ?
+        """,
+        (
+            book["title"],
+            book["author"],
+            book["genre"],
+            book["rating"],
+            book["pages"],
+            book["is_read"],
+            book["cover"],
+            book["notes"],
+            book["reading_status"],
+            book.get("date_read"),
+            book_id,
+        )
+    )
 
+    conn.commit()
     conn.close()
+
+
+# ============================================================
+# Delete book
+# ============================================================
 
 def delete_book(book_id):
 
@@ -216,13 +282,20 @@ def delete_book(book_id):
     conn.execute(
         """
         DELETE FROM books
-        WHERE id=?
+        WHERE id = ?
         """,
-        (book_id,)
+        (
+            book_id,
+        )
     )
 
     conn.commit()
     conn.close()
+
+
+# ============================================================
+# Genre statistics
+# ============================================================
 
 def get_genre_counts():
 
@@ -230,9 +303,9 @@ def get_genre_counts():
 
     genres = conn.execute(
         """
-        SELECT 
+        SELECT
             genre,
-            COUNT(*) as count
+            COUNT(*) AS count
         FROM books
         WHERE genre IS NOT NULL
         GROUP BY genre
