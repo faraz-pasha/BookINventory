@@ -14,6 +14,7 @@ from database import (
 from PySide6.QtCore import QTimer
 from ui.book_details import BookDetails
 from ui.statistics_page import StatisticsPage
+from ui.suggestion_page import SuggestionPage
 
 class MainWindow(QMainWindow):
 
@@ -133,6 +134,12 @@ class MainWindow(QMainWindow):
             "📊 Statistics"
         )
 
+        suggestion_button = QPushButton(
+            "🎲 Suggestions"
+        )
+        suggestion_button.clicked.connect(
+            self.show_suggestions
+        )
         statistics_button.clicked.connect(
             self.show_statistics
         )
@@ -166,6 +173,10 @@ class MainWindow(QMainWindow):
         )
 
         top_bar.addWidget(
+            suggestion_button
+        )
+
+        top_bar.addWidget(
             button
         )
 
@@ -175,6 +186,14 @@ class MainWindow(QMainWindow):
         self.statistics_page = StatisticsPage()
 
         self.statistics_page.hide()
+
+        self.suggestion_page = SuggestionPage()
+
+        self.suggestion_page.hide()
+
+        self.suggestion_page.details_requested.connect(
+            self.show_details
+        )
         self.book_container = QWidget()
 
         self.book_container.setObjectName(
@@ -203,6 +222,9 @@ class MainWindow(QMainWindow):
         )
         right.addWidget(
             self.statistics_page
+        )
+        right.addWidget(
+            self.suggestion_page
         )
         right.addWidget(
             self.scroll_books
@@ -546,6 +568,8 @@ class MainWindow(QMainWindow):
 
         self.statistics_page.hide()
 
+        self.suggestion_page.hide()
+
         self.scroll_books.show()
 
         self.search_bar.show()
@@ -555,6 +579,8 @@ class MainWindow(QMainWindow):
     def show_statistics(self):
 
         self.scroll_books.hide()
+
+        self.suggestion_page.hide()
 
         self.statistics_page.show()
 
@@ -568,6 +594,23 @@ class MainWindow(QMainWindow):
             books,
             self.current_statistics_title()
         )
+
+    def show_suggestions(self):
+
+        self.scroll_books.hide()
+
+        self.statistics_page.hide()
+
+        self.suggestion_page.show()
+
+        self.search_bar.hide()
+
+        self.sort_box.hide()
+
+        # Refresh genres in case a new
+        # genre was recently added.
+
+        self.suggestion_page.load_genres()
 
     def current_statistics_title(self):
 

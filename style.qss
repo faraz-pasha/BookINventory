@@ -694,3 +694,106 @@ QFrame#bookCard[status="finished"] {
     background-color: #d8ead9;
     border: 1px solid #b8d5bb;
 }
+
+
+/* =========================
+   Suggestions
+   ========================= */
+
+#suggestionPage {
+    background-color: #E4EBDD;
+}
+
+
+#suggestionTitle {
+    font-size: 28px;
+    font-weight: bold;
+    color: #2F3E46;
+}
+
+
+#suggestionMessage {
+    font-size: 14px;
+    color: #52796F;
+}
+
+
+#suggestionResults {
+    background-color: transparent;
+    border: none;
+}
+
+
+#suggestionPage QComboBox,
+#suggestionPage QSpinBox {
+
+    background-color: white;
+    color: #2C2C2C;
+
+    border: 2px solid #CAD2C5;
+    border-radius: 10px;
+
+    padding: 7px 10px;
+}
+
+
+#suggestionPage QPushButton {
+
+    background-color: #52796F;
+    color: white;
+
+    border: none;
+    border-radius: 10px;
+
+    padding: 8px 14px;
+
+    font-weight: bold;
+}
+
+
+#suggestionPage QPushButton:hover {
+    background-color: #354F52;
+}
+
+
+#suggestionPage QPushButton:disabled {
+    background-color: #AEB8B2;
+}
+
+/* =========================
+   Suggestion Genre List
+   ========================= */
+
+#suggestionPage QListWidget {
+
+    background-color: white;
+    color: #2C2C2C;
+
+    border: 2px solid #CAD2C5;
+    border-radius: 10px;
+
+    padding: 6px;
+}
+
+
+#suggestionPage QListWidget::item {
+
+    color: #2C2C2C;
+
+    padding: 5px;
+
+    border-radius: 5px;
+}
+
+
+#suggestionPage QListWidget::item:hover {
+
+    background-color: #E4EBDD;
+}
+
+
+#suggestionPage QListWidget::item:selected {
+
+    background-color: #CAD2C5;
+    color: #2C2C2C;
+}
