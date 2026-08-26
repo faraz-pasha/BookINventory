@@ -1,75 +1,167 @@
-# Book Inventory App
+# Book Inventory
 
-A desktop book inventory and reading-tracking application built with **Python** and **PySide6**. The application provides a visual interface for organizing a personal book collection, tracking reading status, and managing book information.
+Book Inventory is a desktop application for managing a personal book collection and tracking reading activity. It is built with Python, PySide6, and SQLite.
+
+The application provides tools for organizing books, tracking reading status and dates, viewing library statistics, receiving book suggestions, and backing up or exporting library data.
 
 ## Features
 
-* Add books to your personal library
-* Edit existing book information
-* Delete books
+* Add, edit, and delete books
+* Store custom book cover images
 * Organize books by genre
-* Track whether a book has been read
-* Search for books
-* Sort books by:
+* Track books as Want to Read, Currently Reading, or Finished
+* Track dates added and dates read
+* Rate books and record page counts
+* Add personal notes
+* Search the library
+* Filter books by reading status and genre
+* Sort by title, author, rating, pages, date added, or date read
+* View library statistics
+* Generate book suggestions from the existing collection
+* Back up and restore the complete library
+* Export book information to CSV
+* Store library information locally using SQLite
 
-  * Title
-  * Author
-  * Rating
-  * Number of pages
-* View detailed information about individual books
-* Add notes to books
-* Store book information in a local SQLite database
-* Visual book cards for browsing the collection
-* Custom styling using Qt Style Sheets (`.qss`)
+## Version History
+
+### v1.0.0 — Core Library
+
+Initial implementation of the book inventory system.
+
+**Features:**
+
+* Add, edit, and delete books
+* Local SQLite database
+* Title, author, and genre information
+* Ratings and page counts
+* Personal notes
+* Custom book cover images
+* Book card interface
+* Detailed book views
+
+### v1.1.0 — Library Navigation
+
+Improved navigation and organization for larger book collections.
+
+**Features:**
+
+* Sidebar navigation
+* Genre-based organization
+* Library search
+* Sorting by title, author, rating, and page count
+* Dynamic book-card layout
+* Scrollable library view
+
+### v1.2.0 — Reading Status and Statistics
+
+Expanded the application from a collection manager into a reading tracker.
+
+**Features:**
+
+* Want to Read, Currently Reading, and Finished statuses
+* Reading-status filtering
+* Genre filtering within reading statuses
+* Status-specific book card styling
+* Library statistics
+* Statistics based on the currently selected library section
+* Improved sidebar organization
+
+### v1.3.0 — Book Suggestions
+
+Introduced tools for selecting books to read from the existing collection.
+
+**Features:**
+
+* Dedicated Suggestions page
+* Random book suggestions
+* Genre-based suggestions
+* Suggestions generated from books stored in the library
+* Direct access to book details from suggestions
+
+### v1.4.0 — Reading Dates
+
+Added chronological information for tracking the library and reading history.
+
+**Features:**
+
+* Date Added tracking
+* Date Read tracking
+* Reading-status integration
+* Sorting by Date Added
+* Sorting by Date Read
+* Reading-date support when editing books
+* Reading dates displayed in book information
+
+### v1.5.0 — Backup, Restore, and Export
+
+Introduced data-management tools for protecting and exporting the library.
+
+**Features:**
+
+* Complete library backups in ZIP format
+* User-selected backup filenames and locations
+* Database and book cover images included in backups
+* Restore library from a backup
+* Restore both database records and cover images
+* Confirmation before replacing the current library
+* Export library metadata to CSV
+* User-selected CSV filenames and locations
+* Internal cover-image paths excluded from CSV exports
+* Dedicated data-management controls in the sidebar
 
 ## Technologies
 
-* **Python**
-* **PySide6** — graphical user interface
-* **SQLite** — local database
-* **Qt Style Sheets (QSS)** — application styling
+* Python 3
+* PySide6
+* SQLite
+* Qt Style Sheets (QSS)
+* CSV
+* ZIP archives
 
 ## Project Structure
 
 ```text
-book-inventory/
+BookINventory/
 │
-├── main.py                 # Application entry point
-├── database.py             # Database operations
-├── models.py               # Application data models
-├── style.qss               # Application styling
-├── .gitignore              # Files excluded from Git
+├── main.py
+├── database.py
+├── constants.py
+├── backup.py
+├── export.py
+├── style.qss
+├── requirements.txt
 │
-├── database/               # Local database files
+├── database/
+│   └── library.db
 │
-├── ui/                     # User interface components
-│   ├── add_book_dialog.py
-│   ├── book_card.py
-│   ├── book_details.py
-│   └── ...
+├── images/
+│   └── book cover images
 │
-└── images/                 # Local book images
+├── assets/
+│
+└── ui/
+    ├── main_window.py
+    ├── add_book_dialog.py
+    ├── book_card.py
+    ├── book_details.py
+    ├── statistics_page.py
+    └── suggestion_page.py
 ```
 
-The local SQLite database and user-provided images are excluded from version control.
-
-## Requirements
-
-* Python 3.x
-* PySide6
+The local database and user-provided book cover images are excluded from version control.
 
 ## Installation
 
 Clone the repository:
 
 ```bash
-git clone <repository-url>
-cd book-inventory
+git clone https://github.com/faraz-pasha/BookINventory.git
+cd BookINventory
 ```
 
-Create a virtual environment:
+Create a virtual environment.
 
-### macOS / Linux
+### macOS and Linux
 
 ```bash
 python3 -m venv .venv
@@ -83,71 +175,68 @@ python -m venv .venv
 .venv\Scripts\activate
 ```
 
-Install the required dependencies:
+Install the dependencies:
 
 ```bash
-pip install PySide6
+pip install -r requirements.txt
 ```
 
 ## Running the Application
 
-From the project directory:
+Run the application with:
 
 ```bash
 python main.py
 ```
 
-On macOS, you may need to use:
+or, depending on the system:
 
 ```bash
 python3 main.py
 ```
 
-## Database
+## Data Storage
 
-The application uses **SQLite** for local book storage. The database is created and managed locally by the application.
+Book Inventory stores library information locally using SQLite.
 
-The local database file is intentionally excluded from Git because it contains user-specific library data.
+The database contains book metadata including titles, authors, genres, ratings, reading statuses, dates, page counts, notes, and references to locally stored cover images.
 
-## Git Workflow
+The database and user-provided cover images are not committed to the repository.
 
-This project uses Git for version control.
+## Backup and Restore
 
-A typical development workflow is:
+The application can create a ZIP archive containing the complete local library:
 
-```bash
-git pull
-
-# Make changes
-
-git status
-git add .
-git commit -m "Describe your changes"
-git push
+```text
+BookInventory_Backup.zip
+│
+├── library.db
+└── images/
+    └── ...
 ```
 
-For new features, create a separate branch:
+A backup can later be restored through the application, replacing the current database and cover images after user confirmation.
 
-```bash
-git switch -c feature/my-feature
-```
+## CSV Export
 
-After completing the feature, push the branch and create a pull request on GitHub.
+Book metadata can be exported to a CSV file for use outside the application.
 
-## Future Improvements
+The export contains library metadata while excluding internal cover-image file paths.
 
-Potential future additions include:
+## Planned Improvements
 
-* Book cover management
-* Improved filtering
-* Reading progress tracking
-* Book recommendations
-* Statistics and reading analytics
-* Import/export functionality
-* ISBN lookup
+Potential future development includes:
+
+* Richer book metadata
+* Author and series organization
+* Advanced reading history and statistics
+* Smarter book recommendations
+* Import from external data files
+* ISBN support
+* Automatic book metadata lookup
+* Automatic cover lookup
 * Integration with external book APIs
-* Improved database management and backup
 
 ## License
 
-This project is currently for personal use.
+This project is currently intended for personal use.
