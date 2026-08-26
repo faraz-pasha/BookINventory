@@ -1,5 +1,5 @@
 from datetime import datetime
-
+from pathlib import Path
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -188,9 +188,17 @@ class BookDetails(QDialog):
             "detailsStatus"
         )
 
-        status.setProperty(
+        self.setProperty(
             "status",
-            "read" if book["is_read"] else "unread"
+            reading_status
+        )
+
+        self.style().unpolish(
+            self
+        )
+
+        self.style().polish(
+            self
         )
 
         date_added = QLabel(

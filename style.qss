@@ -332,8 +332,16 @@ QLabel#bookTitle {
    BOOK DETAILS
    ========================================================= */
 
-#bookDetails {
-    background-color: #E8F1E3;
+#bookDetails[status="want_to_read"] {
+    background-color: #F3D6D6;
+}
+
+#bookDetails[status="currently_reading"] {
+    background-color: #F3E3C3;
+}
+
+#bookDetails[status="finished"] {
+    background-color: #D8EAD9;
 }
 
 #detailsTitle {

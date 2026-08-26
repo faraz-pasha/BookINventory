@@ -204,6 +204,35 @@ class MainWindow(QMainWindow):
         top_bar.addWidget(
             self.search_bar
         )
+        control_height = 36
+
+        self.search_bar.setFixedHeight(
+            control_height
+        )
+
+        self.sort_box.setFixedHeight(
+            control_height
+        )
+
+        self.sort_direction_button.setFixedHeight(
+            control_height
+        )
+        statistics_button.setFixedHeight(
+            control_height
+        )
+
+        books_button.setFixedHeight(
+            control_height
+        )
+
+        suggestion_button.setFixedHeight(
+            control_height
+        )
+
+        button.setFixedHeight(
+            control_height
+        )
+
 
         top_bar.addWidget(
             sort_label
@@ -232,6 +261,8 @@ class MainWindow(QMainWindow):
         top_bar.addWidget(
             button
         )
+
+
 
         right.addLayout(
             top_bar
