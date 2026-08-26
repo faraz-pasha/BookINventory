@@ -22,7 +22,6 @@ from constants import (
 
 class BookCard(QFrame):
 
-    edit_requested = Signal(dict)
     details_requested = Signal(dict)
 
     def __init__(self, book):

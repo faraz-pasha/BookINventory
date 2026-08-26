@@ -292,30 +292,3 @@ def delete_book(book_id):
     conn.commit()
     conn.close()
 
-
-# ============================================================
-# Genre statistics
-# ============================================================
-
-def get_genre_counts():
-
-    conn = get_connection()
-
-    genres = conn.execute(
-        """
-        SELECT
-            genre,
-            COUNT(*) AS count
-        FROM books
-        WHERE genre IS NOT NULL
-        GROUP BY genre
-        ORDER BY genre
-        """
-    ).fetchall()
-
-    conn.close()
-
-    return [
-        dict(row)
-        for row in genres
-    ]

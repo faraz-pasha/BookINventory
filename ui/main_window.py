@@ -361,9 +361,6 @@ class MainWindow(QMainWindow):
             card.details_requested.connect(
                 self.show_details
             )
-            card.edit_requested.connect(
-                self.edit_book
-            )
 
             self.grid.addWidget(
                 card,
