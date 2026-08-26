@@ -11,6 +11,8 @@ from PySide6.QtWidgets import (
     QLabel,
     QGridLayout,
     QScrollArea,
+    QFileDialog,
+    QMessageBox,
 )
 
 from PySide6.QtCore import (
@@ -18,6 +20,11 @@ from PySide6.QtCore import (
     QTimer,
 )
 
+from backup import (
+    create_backup,
+    restore_backup,
+)
+from export import export_library as export_library_csv
 from ui.add_book_dialog import AddBookDialog
 from ui.book_card import BookCard
 from ui.book_details import BookDetails
@@ -36,6 +43,35 @@ from constants import (
     STATUS_CURRENTLY_READING,
     STATUS_FINISHED,
 )
+
+
+GENRE_EMOJIS = {
+    "Fantasy": "🐉",
+    "Fiction": "📘",
+    "Romance": "💕",
+    "Mystery": "🔎",
+    "Thriller": "🔪",
+    "Horror": "👻",
+    "Science Fiction": "🚀",
+    "Historical Fiction": "🏛️",
+    "Adventure": "🧭",
+    "Crime": "🕵️",
+    "Biography": "👤",
+    "Autobiography": "📝",
+    "Memoir": "💭",
+    "History": "🏺",
+    "Science": "🔬",
+    "Philosophy": "🧠",
+    "Psychology": "🧩",
+    "Self-Help": "🌱",
+    "Business": "💼",
+    "Poetry": "🪶",
+    "Classics": "🏛️",
+    "Young Adult": "🌟",
+    "Children": "🧸",
+    "Nonfiction": "📚",
+    "Art": "🎨",
+}
 
 class MainWindow(QMainWindow):
 
@@ -100,10 +136,77 @@ class MainWindow(QMainWindow):
 
         self.update_shelves()
 
+        # -----------------
+        # Sidebar container
+        # -----------------
 
+        sidebar_layout = QVBoxLayout()
 
-        main_layout.addWidget(
+        sidebar_layout.setContentsMargins(
+            0,
+            0,
+            0,
+            0
+        )
+
+        sidebar_layout.addWidget(
             self.sidebar
+        )
+
+        # -----------------
+        # Library tools
+        # -----------------
+
+        backup_button = QPushButton(
+            "💾 Backup Library"
+        )
+
+        backup_button.setFixedHeight(
+            40
+        )
+
+        backup_button.clicked.connect(
+            self.backup_library
+        )
+
+        sidebar_layout.addWidget(
+            backup_button
+        )
+
+        restore_button = QPushButton(
+            "♻️ Restore Backup"
+        )
+
+        restore_button.setFixedHeight(
+            40
+        )
+
+        restore_button.clicked.connect(
+            self.restore_library
+        )
+
+        sidebar_layout.addWidget(
+            restore_button
+        )
+
+        export_button = QPushButton(
+            "📤 Export Library"
+        )
+
+        export_button.setFixedHeight(
+            40
+        )
+
+        export_button.clicked.connect(
+            self.export_library
+        )
+
+        sidebar_layout.addWidget(
+            export_button
+        )
+
+        main_layout.addLayout(
+            sidebar_layout
         )
 
         # -----------------
@@ -473,7 +576,7 @@ class MainWindow(QMainWindow):
 
         sections = [
             ("📚 All Books", "all"),
-            ("📚 Want to Read", STATUS_WANT_TO_READ),
+            ("🔖 Want to Read", STATUS_WANT_TO_READ),
             ("📖 Currently Reading", STATUS_CURRENTLY_READING),
             ("✅ Finished", STATUS_FINISHED),
         ]
@@ -561,12 +664,16 @@ class MainWindow(QMainWindow):
             for genre, count in sorted(
                     genres.items()
             ):
-                item = QTreeWidgetItem(
-                    [
-                        f"📖 {genre} ({count})"
-                    ]
+                emoji = GENRE_EMOJIS.get(
+                    genre,
+                    "📖"
                 )
 
+                item = QTreeWidgetItem(
+                    [
+                        f"{emoji} {genre} ({count})"
+                    ]
+                )
                 item.setData(
                     0,
                     Qt.UserRole,
@@ -578,7 +685,7 @@ class MainWindow(QMainWindow):
                 )
 
             parent.setExpanded(
-                True
+                False
             )
 
     def sidebar_clicked(
@@ -875,3 +982,220 @@ class MainWindow(QMainWindow):
             )
 
         self.load_books()
+
+    def backup_library(self):
+
+        backup_file, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save Library Backup",
+            "BookInventory_Backup.zip",
+            "ZIP Files (*.zip)",
+        )
+
+        if not backup_file:
+            return
+
+        try:
+
+            backup_path = create_backup(
+                backup_file
+            )
+
+            message = QMessageBox(
+                self
+            )
+
+            message.setObjectName(
+                "backupSuccessMessage"
+            )
+
+            message.setWindowTitle(
+                "Backup Complete"
+            )
+
+            message.setIcon(
+                QMessageBox.Information
+            )
+
+            message.setText(
+                "Library backed up successfully!"
+            )
+
+            message.setInformativeText(
+                f"Saved to:\n{backup_path}"
+            )
+
+            message.setStandardButtons(
+                QMessageBox.Ok
+            )
+
+            message.exec()
+
+        except Exception as error:
+
+            QMessageBox.critical(
+                self,
+                "Backup Failed",
+                (
+                    "The backup could not be created.\n\n"
+                    f"{error}"
+                ),
+            )
+
+    def restore_library(self):
+
+        backup_file, _ = QFileDialog.getOpenFileName(
+            self,
+            "Restore Library Backup",
+            "",
+            "ZIP Files (*.zip)",
+        )
+
+        if not backup_file:
+            return
+
+        confirm = QMessageBox(
+            self
+        )
+
+        confirm.setObjectName(
+            "restoreConfirmMessage"
+        )
+
+        confirm.setWindowTitle(
+            "Restore Backup"
+        )
+
+        confirm.setIcon(
+            QMessageBox.Warning
+        )
+
+        confirm.setText(
+            "Are you sure you want to restore this backup?"
+        )
+
+        confirm.setInformativeText(
+            "Your current library and cover images "
+            "will be replaced."
+        )
+
+        confirm.setStandardButtons(
+            QMessageBox.Yes | QMessageBox.No
+        )
+
+        confirm.setDefaultButton(
+            QMessageBox.No
+        )
+
+        result = confirm.exec()
+
+        if result != QMessageBox.Yes:
+            return
+
+        try:
+
+            restore_backup(
+                backup_file
+            )
+
+            self.update_shelves()
+            self.load_books()
+
+            message = QMessageBox(
+                self
+            )
+
+            message.setObjectName(
+                "backupSuccessMessage"
+            )
+
+            message.setWindowTitle(
+                "Restore Complete"
+            )
+
+            message.setIcon(
+                QMessageBox.Information
+            )
+
+            message.setText(
+                "Library restored successfully!"
+            )
+
+            message.setStandardButtons(
+                QMessageBox.Ok
+            )
+
+            message.exec()
+
+        except Exception as error:
+
+            QMessageBox.critical(
+                self,
+                "Restore Failed",
+                (
+                    "The backup could not be restored.\n\n"
+                    f"{error}"
+                ),
+            )
+
+    def export_library(self):
+
+        export_file, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export Library",
+            "BookInventory.csv",
+            "CSV Files (*.csv)",
+        )
+
+        if not export_file:
+            return
+
+        try:
+
+            books = get_books()
+
+            export_path = export_library_csv(
+                export_file,
+                books
+            )
+
+            message = QMessageBox(
+                self
+            )
+
+            message.setObjectName(
+                "backupSuccessMessage"
+            )
+
+            message.setWindowTitle(
+                "Export Complete"
+            )
+
+            message.setIcon(
+                QMessageBox.Information
+            )
+
+            message.setText(
+                "Library exported successfully!"
+            )
+
+            message.setInformativeText(
+                f"Saved to:\n{export_path}"
+            )
+
+            message.setStandardButtons(
+                QMessageBox.Ok
+            )
+
+            message.exec()
+
+        except Exception as error:
+
+            QMessageBox.critical(
+                self,
+                "Export Failed",
+                (
+                    "The library could not be exported.\n\n"
+                    f"{error}"
+                ),
+            )

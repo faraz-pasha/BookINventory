@@ -582,3 +582,67 @@ QCalendarWidget#dateCalendar QSpinBox {
     border: 1px solid #CAD2C5;
     border-radius: 5px;
 }
+
+/* =========================================================
+   BACKUP MESSAGE
+   ========================================================= */
+
+#backupSuccessMessage {
+    background-color: #F4F1DE;
+}
+
+#backupSuccessMessage QLabel {
+    color: #2F3E46;
+
+    font-size: 14px;
+}
+
+#backupSuccessMessage QPushButton {
+    background-color: #52796F;
+    color: #FFFFFF;
+
+    border: none;
+    border-radius: 8px;
+
+    padding: 7px 22px;
+
+    font-weight: bold;
+
+    min-width: 70px;
+}
+
+#backupSuccessMessage QPushButton:hover {
+    background-color: #3F665E;
+}
+
+/* =========================================================
+   RESTORE CONFIRMATION
+   ========================================================= */
+
+#restoreConfirmMessage {
+    background-color: #F4F1DE;
+}
+
+#restoreConfirmMessage QLabel {
+    color: #2F3E46;
+
+    font-size: 14px;
+}
+
+#restoreConfirmMessage QPushButton {
+    background-color: #CAD2C5;
+    color: #2F3E46;
+
+    border: none;
+    border-radius: 8px;
+
+    padding: 7px 22px;
+
+    font-weight: bold;
+
+    min-width: 70px;
+}
+
+#restoreConfirmMessage QPushButton:hover {
+    background-color: #B8C4B3;
+}
