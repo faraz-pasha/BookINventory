@@ -15,3 +15,5 @@ env/
 database/library.db
 
 images/
+
+*.iconset/
