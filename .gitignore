@@ -17,3 +17,7 @@ database/library.db
 images/
 
 *.iconset/
+
+# PyInstaller
+build/
+dist/
