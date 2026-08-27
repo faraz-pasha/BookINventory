@@ -14,8 +14,10 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QMessageBox,
 )
+from PySide6.QtGui import QPixmap
 
-
+from app_paths import resource_path
+from app_metadata import APP_NAME
 
 from PySide6.QtCore import (
     Qt,
@@ -87,7 +89,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle(
-            "📚 My Library"
+            APP_NAME
         )
 
         self.resize(1200, 700)
@@ -103,6 +105,7 @@ class MainWindow(QMainWindow):
         )
 
         main_layout = QHBoxLayout(central_widget)
+
 
         # -----------------
         # Sidebar
@@ -154,6 +157,48 @@ class MainWindow(QMainWindow):
             0,
             0,
             0
+        )
+
+        # -----------------
+        # Shelfie logo
+        # -----------------
+
+        logo = QLabel()
+
+        logo.setObjectName(
+            "sidebarLogo"
+        )
+
+        logo.setAlignment(
+            Qt.AlignCenter
+        )
+
+        logo_path = resource_path(
+            "assets/logo_stretched.png"
+        )
+
+        if logo_path.exists():
+
+            pixmap = QPixmap(
+                str(logo_path)
+            )
+
+            if not pixmap.isNull():
+                logo.setPixmap(
+                    pixmap.scaled(
+                        240,
+                        150,
+                        Qt.KeepAspectRatio,
+                        Qt.SmoothTransformation,
+                    )
+                )
+
+        logo.setFixedHeight(
+            150
+        )
+
+        sidebar_layout.addWidget(
+            logo
         )
 
         sidebar_layout.addWidget(
