@@ -55,9 +55,12 @@ def initialize_database():
             cover TEXT,
             notes TEXT,
 
+            isbn TEXT,
+            description TEXT,
+            
             reading_status TEXT
-                DEFAULT '{STATUS_WANT_TO_READ}',
-
+            DEFAULT '{STATUS_WANT_TO_READ}',
+            
             date_added TEXT,
             date_read TEXT
         )
@@ -130,7 +133,25 @@ def migrate_database(conn):
             ALTER TABLE books
             ADD COLUMN date_read TEXT
         """)
+    # --------------------------------------------------------
+    # ISBN
+    # --------------------------------------------------------
 
+    if "isbn" not in column_names:
+        conn.execute("""
+        ALTER TABLE books
+        ADD COLUMN isbn TEXT
+        """)
+
+    # --------------------------------------------------------
+    # Description
+    # --------------------------------------------------------
+
+    if "description" not in column_names:
+        conn.execute("""
+        ALTER TABLE books
+        ADD COLUMN description TEXT
+        """)
     # --------------------------------------------------------
     # Convert old is_read values to reading_status
     # --------------------------------------------------------
@@ -180,11 +201,13 @@ def add_book(book):
             is_read,
             cover,
             notes,
+            isbn,
+            description,
             reading_status,
             date_added,
             date_read
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             book["title"],
@@ -195,6 +218,8 @@ def add_book(book):
             book["is_read"],
             book["cover"],
             book["notes"],
+            book.get("isbn"),
+            book.get("description"),
             book["reading_status"],
             date.today().isoformat(),
             book.get("date_read"),
@@ -248,6 +273,8 @@ def update_book(
             is_read = ?,
             cover = ?,
             notes = ?,
+            isbn = ?,
+            description = ?,
             reading_status = ?,
             date_read = ?
         WHERE id = ?
@@ -261,11 +288,14 @@ def update_book(
             book["is_read"],
             book["cover"],
             book["notes"],
+            book.get("isbn"),
+            book.get("description"),
             book["reading_status"],
             book.get("date_read"),
             book_id,
         )
     )
+
 
     conn.commit()
     conn.close()

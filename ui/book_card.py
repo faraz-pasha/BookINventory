@@ -170,19 +170,16 @@ class BookCard(QFrame):
         )
 
         title.setAlignment(
-            Qt.AlignCenter
+            Qt.AlignTop
+            | Qt.AlignHCenter
         )
 
         title.setWordWrap(
             True
         )
 
-        title.setMinimumHeight(
-            45
-        )
-
-        title.setMaximumHeight(
-            65
+        title.setFixedHeight(
+            75
         )
 
         layout.addWidget(

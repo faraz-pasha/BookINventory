@@ -1,6 +1,10 @@
 import shutil
 from pathlib import Path
 
+from PySide6.QtCore import (
+    QDate,
+    Qt,
+)
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -13,7 +17,16 @@ from PySide6.QtWidgets import (
     QPushButton,
     QFileDialog,
     QMessageBox,
+    QFormLayout,
+    QHBoxLayout,
 )
+
+from book_lookup import (
+    search_books,
+    download_cover,
+)
+from ui.book_lookup_dialog import BookLookupDialog
+from ui.cover_lookup_dialog import CoverLookupDialog
 
 from PySide6.QtCore import QDate
 from uuid import uuid4
@@ -31,7 +44,7 @@ class AddBookDialog(QDialog):
     def __init__(self, book=None):
 
         super().__init__()
-
+        self.lookup_cover_url = ""
         self.setObjectName(
             "addBookDialog"
         )
@@ -46,11 +59,25 @@ class AddBookDialog(QDialog):
 
         self.resize(
             400,
-            500
+            650
         )
 
         layout = QVBoxLayout(
             self
+        )
+
+        form = QFormLayout()
+
+        form.setLabelAlignment(
+            Qt.AlignRight
+        )
+
+        form.setHorizontalSpacing(
+            15
+        )
+
+        form.setVerticalSpacing(
+            10
         )
 
         # -------------------------
@@ -60,6 +87,15 @@ class AddBookDialog(QDialog):
         self.title = QLineEdit()
         self.author = QLineEdit()
 
+        # -------------------------
+        # ISBN
+        # -------------------------
+
+        self.isbn = QLineEdit()
+
+        self.isbn.setPlaceholderText(
+            "ISBN"
+        )
         # -------------------------
         # Genre
         # -------------------------
@@ -89,6 +125,12 @@ class AddBookDialog(QDialog):
 
         self.custom_genre.hide()
 
+        self.custom_genre_label = QLabel(
+            "Custom Genre:"
+        )
+
+        self.custom_genre_label.hide()
+        self.custom_genre.hide()
         # -------------------------
         # Rating / Pages
         # -------------------------
@@ -145,9 +187,6 @@ class AddBookDialog(QDialog):
         # Date read
         # -------------------------
 
-        self.date_read_label = QLabel(
-            "Date Read"
-        )
 
         self.date_read = QDateEdit()
 
@@ -167,8 +206,21 @@ class AddBookDialog(QDialog):
             QDate.currentDate()
         )
 
-        self.date_read_label.hide()
         self.date_read.hide()
+
+        # -------------------------
+        # Description
+        # -------------------------
+
+        self.description = QTextEdit()
+
+        self.description.setPlaceholderText(
+            "Book description"
+        )
+
+        self.description.setMaximumHeight(
+            100
+        )
 
         # -------------------------
         # Notes
@@ -179,81 +231,90 @@ class AddBookDialog(QDialog):
         # -------------------------
         # Layout
         # -------------------------
+        title_row = QHBoxLayout()
 
-        layout.addWidget(
-            QLabel("Title")
-        )
-
-        layout.addWidget(
+        title_row.addWidget(
             self.title
         )
 
-        layout.addWidget(
-            QLabel("Author")
+        lookup_button = QPushButton(
+            "Search"
         )
 
-        layout.addWidget(
+        lookup_button.clicked.connect(
+            self.lookup_book
+        )
+
+        title_row.addWidget(
+            lookup_button
+        )
+
+        form.addRow(
+            "Title:",
+            title_row
+        )
+
+        form.addRow(
+            "Author:",
             self.author
         )
 
-        layout.addWidget(
-            QLabel("Genre")
+        form.addRow(
+            "ISBN:",
+            self.isbn
         )
-
-        layout.addWidget(
+        form.addRow(
+            "Genre:",
             self.genre
         )
 
-        layout.addWidget(
+        form.addRow(
+            self.custom_genre_label,
             self.custom_genre
         )
 
-        layout.addWidget(
-            QLabel("Rating")
-        )
-
-        layout.addWidget(
+        form.addRow(
+            "Rating:",
             self.rating
         )
 
-        layout.addWidget(
-            QLabel("Pages")
-        )
-
-        layout.addWidget(
+        form.addRow(
+            "Pages:",
             self.pages
         )
 
-        layout.addWidget(
+        form.addRow(
+            "Cover:",
             self.cover
         )
 
-        layout.addWidget(
+        form.addRow(
+            "",
             browse
         )
 
-        layout.addWidget(
-            QLabel("Reading Status")
-        )
-
-        layout.addWidget(
+        form.addRow(
+            "Status:",
             self.reading_status
         )
 
-        layout.addWidget(
-            self.date_read_label
-        )
-
-        layout.addWidget(
+        form.addRow(
+            "Date Read:",
             self.date_read
         )
 
-        layout.addWidget(
-            QLabel("Notes")
+        form.addRow(
+            "Description:",
+            self.description
         )
 
-        layout.addWidget(
+        form.addRow(
+            "Notes:",
             self.notes
+        )
+
+        layout.addLayout(
+            form
         )
 
         save = QPushButton(
@@ -288,6 +349,10 @@ class AddBookDialog(QDialog):
 
         self.author.setText(
             book["author"] or ""
+        )
+
+        self.isbn.setText(
+            book.get("isbn") or ""
         )
 
         self.pages.setValue(
@@ -398,6 +463,10 @@ class AddBookDialog(QDialog):
 
         self.cover.setText(
             book["cover"] or ""
+        )
+
+        self.description.setText(
+            book.get("description") or ""
         )
 
         self.notes.setText(
@@ -523,6 +592,17 @@ class AddBookDialog(QDialog):
                 cover_path = str(
                     destination
                 )
+        elif self.lookup_cover_url:
+
+            try:
+
+                cover_path = download_cover(
+                    self.lookup_cover_url
+                )
+
+            except RuntimeError:
+
+                cover_path = ""
         # -------------------------
         # UI text -> internal status
         # -------------------------
@@ -609,6 +689,12 @@ class AddBookDialog(QDialog):
             "cover":
                 cover_path,
 
+            "isbn":
+                self.isbn.text().strip(),
+
+            "description":
+                self.description.toPlainText().strip(),
+
             "notes":
                 self.notes.toPlainText(),
 
@@ -624,39 +710,184 @@ class AddBookDialog(QDialog):
     # =====================================================
 
     def genre_changed(
-        self,
-        text
+            self,
+            text
     ):
 
-        if text == "Other":
+        is_other = (
+                text == "Other"
+        )
 
-            self.custom_genre.show()
+        self.custom_genre_label.setVisible(
+            is_other
+        )
 
-        else:
-
-            self.custom_genre.hide()
-
+        self.custom_genre.setVisible(
+            is_other
+        )
     # =====================================================
     # Reading status changed
     # =====================================================
 
     def reading_status_changed(
-        self,
-        status
+            self,
+            status
     ):
 
-        # `status` here is UI text,
-        # not the internal constant.
-
         is_finished = (
-            status
-            == "Finished"
-        )
-
-        self.date_read_label.setVisible(
-            is_finished
+                status
+                == "Finished"
         )
 
         self.date_read.setVisible(
             is_finished
         )
+
+    def lookup_book(
+            self
+    ):
+
+        title = (
+            self.title.text()
+            .strip()
+        )
+
+        if not title:
+            QMessageBox.warning(
+                self,
+                "Missing Title",
+                "Enter a title before searching."
+            )
+
+            self.title.setFocus()
+
+            return
+
+        try:
+
+            author = (
+                self.author.text()
+                .strip()
+            )
+
+            results = search_books(
+                title,
+                author
+            )
+        except Exception as error:
+
+            QMessageBox.critical(
+                self,
+                "Lookup Failed",
+                str(error)
+            )
+
+            return
+
+        if not results:
+            QMessageBox.information(
+                self,
+                "No Results",
+                "No matching books were found."
+            )
+
+            return
+
+        dialog = BookLookupDialog(
+            results,
+            self
+        )
+
+        if not dialog.exec():
+            return
+
+        book = dialog.get_selected_book()
+
+        if not book:
+            return
+
+        self.apply_lookup_result(
+            book
+        )
+
+        cover_dialog = CoverLookupDialog(
+            results,
+            self
+        )
+
+        if cover_dialog.exec():
+            self.lookup_cover_url = (
+                cover_dialog.get_selected_cover()
+            )
+
+    def apply_lookup_result(
+            self,
+            book
+    ):
+
+        self.title.setText(
+            book.get(
+                "title",
+                ""
+            )
+        )
+
+        self.author.setText(
+            book.get(
+                "author",
+                ""
+            )
+        )
+
+        self.isbn.setText(
+            book.get(
+                "isbn",
+                ""
+            )
+        )
+
+        pages = book.get(
+            "pages",
+            0
+        )
+
+        if pages:
+            self.pages.setValue(
+                pages
+            )
+
+        description = book.get(
+            "description",
+            ""
+        )
+
+        self.description.setPlainText(
+            description
+        )
+
+        genre = book.get(
+            "genre",
+            ""
+        )
+
+        if genre:
+
+            index = self.genre.findText(
+                genre
+            )
+
+            if index >= 0:
+
+                self.genre.setCurrentIndex(
+                    index
+                )
+
+            else:
+
+                self.genre.setCurrentText(
+                    "Other"
+                )
+
+                self.custom_genre.setText(
+                    genre
+                )

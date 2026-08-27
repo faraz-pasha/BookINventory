@@ -119,20 +119,43 @@ class StatisticsPage(QWidget):
 
         self.main_layout.addStretch()
 
+    def clear_content(
+            self
+    ):
 
-    def clear_content(self):
+        self.clear_layout(
+            self.content_layout,
+            delete_layout=False
+        )
 
-        while self.content_layout.count():
+    def clear_layout(
+            self,
+            layout,
+            delete_layout=True
+    ):
 
-            item = self.content_layout.takeAt(
+        while layout.count():
+
+            item = layout.takeAt(
                 0
             )
 
             widget = item.widget()
 
+            child_layout = item.layout()
+
             if widget:
 
                 widget.deleteLater()
+
+            elif child_layout:
+
+                self.clear_layout(
+                    child_layout
+                )
+
+        if delete_layout:
+            layout.deleteLater()
 
 
     def create_stat_card(
