@@ -1,7 +1,4 @@
-import html
 import json
-import os
-import time
 import urllib.parse
 import urllib.request
 from app_paths import IMAGES_DIR
@@ -9,148 +6,9 @@ from uuid import uuid4
 from urllib.error import HTTPError
 
 
-GOOGLE_BOOKS_URL = (
-    "https://www.googleapis.com/books/v1/volumes"
+SHELFIE_API_URL = (
+    "https://shelfie-api-vclz.onrender.com"
 )
-
-GOOGLE_BOOKS_API_KEY = os.getenv(
-    "GOOGLE_BOOKS_API_KEY"
-)
-
-
-def clean_description(
-    description
-):
-
-    if not description:
-        return ""
-
-    return html.unescape(
-        description
-    )
-
-
-def get_isbn(
-    industry_identifiers
-):
-
-    isbn_10 = ""
-    isbn_13 = ""
-
-    for identifier in industry_identifiers:
-
-        identifier_type = identifier.get(
-            "type"
-        )
-
-        value = identifier.get(
-            "identifier",
-            ""
-        )
-
-        if identifier_type == "ISBN_13":
-
-            isbn_13 = value
-
-        elif identifier_type == "ISBN_10":
-
-            isbn_10 = value
-
-    return (
-        isbn_13
-        or isbn_10
-    )
-
-
-def normalize_book(
-    item
-):
-
-    volume_info = item.get(
-        "volumeInfo",
-        {}
-    )
-
-    authors = volume_info.get(
-        "authors",
-        []
-    )
-
-    categories = volume_info.get(
-        "categories",
-        []
-    )
-
-    image_links = volume_info.get(
-        "imageLinks",
-        {}
-    )
-
-    return {
-
-        "google_books_id":
-            item.get(
-                "id",
-                ""
-            ),
-
-        "title":
-            volume_info.get(
-                "title",
-                ""
-            ),
-
-        "author":
-            ", ".join(
-                authors
-            ),
-
-        "genre":
-            (
-                categories[0]
-                if categories
-                else ""
-            ),
-
-        "pages":
-            volume_info.get(
-                "pageCount",
-                0
-            ),
-
-        "isbn":
-            get_isbn(
-                volume_info.get(
-                    "industryIdentifiers",
-                    []
-                )
-            ),
-
-        "description":
-            clean_description(
-                volume_info.get(
-                    "description",
-                    ""
-                )
-            ),
-
-        "published_date":
-            volume_info.get(
-                "publishedDate",
-                ""
-            ),
-
-        "cover_url":
-            (
-                image_links.get(
-                    "thumbnail"
-                )
-                or image_links.get(
-                    "smallThumbnail"
-                )
-                or ""
-            ),
-    }
 
 
 def search_books(
@@ -159,52 +17,26 @@ def search_books(
     max_results=10
 ):
 
-    if not GOOGLE_BOOKS_API_KEY:
-
-        raise RuntimeError(
-            "Google Books API key is not configured."
-        )
-
     title = title.strip()
     author = author.strip()
 
     if not title:
         return []
 
-    query_parts = [
-        f'intitle:"{title}"'
-    ]
-
-    if author:
-        query_parts.append(
-            f'inauthor:"{author}"'
-        )
-
-    query = " ".join(
-        query_parts
-    )
-
     parameters = {
+        "title":
+            title,
 
-        "q":
-            query,
+        "author":
+            author,
 
-        "printType":
-            "books",
-
-        "orderBy":
-            "relevance",
-
-        "maxResults":
+        "max_results":
             max_results,
-
-        "key":
-            GOOGLE_BOOKS_API_KEY,
     }
 
     url = (
-        GOOGLE_BOOKS_URL
-        + "?"
+        SHELFIE_API_URL
+        + "/books/search?"
         + urllib.parse.urlencode(
             parameters
         )
@@ -214,86 +46,81 @@ def search_books(
         url,
         headers={
             "User-Agent":
-                "BookInventory"
+                "Shelfie"
         }
     )
 
-    data = None
+    try:
 
-    # --------------------------------------------------------
-    # Google request with retry
-    # --------------------------------------------------------
+        with urllib.request.urlopen(
+            request,
+            timeout=30
+        ) as response:
 
-    for attempt in range(
-        3
-    ):
+            data = json.load(
+                response
+            )
+
+
+    except HTTPError as error:
+
+        error_body = (
+
+            error.read()
+
+            .decode(
+
+                "utf-8",
+
+                errors="replace"
+
+            )
+
+        )
 
         try:
 
-            with urllib.request.urlopen(
-                request,
-                timeout=10
-            ) as response:
+            error_data = json.loads(
 
-                data = json.load(
-                    response
-                )
+                error_body
 
-            break
-
-        except HTTPError as error:
-
-            # ------------------------------------------------
-            # Temporary Google Books backend failure
-            # ------------------------------------------------
-
-            if (
-                error.code == 503
-                and attempt < 2
-            ):
-
-                time.sleep(
-                    2 ** attempt
-                )
-
-                continue
-
-            error_body = (
-                error.read()
-                .decode(
-                    "utf-8"
-                )
             )
 
-            raise RuntimeError(
-                "Google Books lookup failed:\n\n"
-                f"{error_body}"
-            ) from error
+            detail = error_data.get(
 
-        except Exception as error:
+                "detail",
 
-            raise RuntimeError(
-                "Google Books lookup failed:\n\n"
-                f"{error}"
-            ) from error
+                error_body
 
-    if data is None:
+            )
+
+
+        except Exception:
+
+            detail = error_body
 
         raise RuntimeError(
-            "Google Books lookup failed after multiple attempts."
-        )
 
-    items = data.get(
-        "items",
-        []
-    )
+            (
 
-    return [
-        normalize_book(
-            item
-        )
-        for item in items
-    ]
+                f"Shelfie API returned HTTP "
+
+                f"{error.code}.\n\n"
+
+                f"{detail}"
+
+            )
+
+        ) from error
+    
+    except Exception as error:
+
+        raise RuntimeError(
+            "Could not connect to the Shelfie service.\n\n"
+            f"{error}"
+        ) from error
+
+    return data
 
 def download_cover(
     cover_url
