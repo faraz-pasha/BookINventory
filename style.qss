@@ -821,3 +821,73 @@ QCalendarWidget#dateCalendar QSpinBox {
 #noCoverButton:hover {
     background-color: #B8C4B3;
 }
+
+
+/* =========================================================
+   BOOK CARD QUICK CONTROLS
+   ========================================================= */
+
+#bookCard #ratingButton,
+#bookCard #statusButton {
+    background-color: rgba(255, 255, 255, 90);
+    color: #2F3E46;
+
+    border: 1px solid rgba(82, 121, 111, 80);
+    border-radius: 6px;
+
+    padding: 3px 8px;
+
+    min-height: 20px;
+    max-height: 24px;
+
+    font-size: 13px;
+}
+
+#bookCard #ratingButton:hover,
+#bookCard #statusButton:hover {
+    background-color: rgba(255, 255, 255, 150);
+    border: 1px solid #52796F;
+}
+
+#bookCard #ratingButton:pressed,
+#bookCard #statusButton:pressed {
+    background-color: rgba(82, 121, 111, 35);
+}
+
+
+/* =========================================================
+   MESSAGE BOXES
+   ========================================================= */
+
+#appMessageBox {
+    background-color: #F8F5F0;
+}
+
+#appMessageBox QLabel {
+    color: #2F3E46;
+
+    font-size: 14px;
+
+    padding: 4px;
+}
+
+#appMessageBox QPushButton {
+    background-color: #52796F;
+    color: #FFFFFF;
+
+    border: none;
+    border-radius: 8px;
+
+    padding: 6px 18px;
+
+    min-width: 80px;
+    min-height: 26px;
+}
+
+#appMessageBox QPushButton:hover {
+    background-color: #3F665D;
+}
+
+#appMessageBox QPushButton:pressed {
+    background-color: #354F52;
+}

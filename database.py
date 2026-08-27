@@ -1,14 +1,15 @@
 import sqlite3
 from datetime import date
-from pathlib import Path
 
 from constants import (
     STATUS_WANT_TO_READ,
     STATUS_FINISHED,
 )
 
-
-DB_PATH = Path("database/library.db")
+from app_paths import (
+    DB_PATH,
+    migrate_legacy_data,
+)
 
 
 # ============================================================
@@ -36,6 +37,8 @@ def get_connection():
 # ============================================================
 
 def initialize_database():
+
+    migrate_legacy_data()
 
     conn = get_connection()
 
@@ -297,6 +300,69 @@ def update_book(
     )
 
 
+
+    conn.commit()
+    conn.close()
+
+# ============================================================
+# Update reading status
+# ============================================================
+
+def update_book_status(
+    book_id,
+    new_status
+):
+
+    conn = get_connection()
+
+    # Keep legacy is_read field synchronized
+    is_read = (
+        1
+        if new_status == STATUS_FINISHED
+        else 0
+    )
+
+    # If marking as finished for the first time,
+    # automatically store today's date.
+    if new_status == STATUS_FINISHED:
+
+        conn.execute(
+            """
+            UPDATE books
+            SET
+                reading_status = ?,
+                is_read = ?,
+                date_read = COALESCE(
+                    date_read,
+                    ?
+                )
+            WHERE id = ?
+            """,
+            (
+                new_status,
+                is_read,
+                date.today().isoformat(),
+                book_id,
+            )
+        )
+
+    else:
+
+        conn.execute(
+            """
+            UPDATE books
+            SET
+                reading_status = ?,
+                is_read = ?
+            WHERE id = ?
+            """,
+            (
+                new_status,
+                is_read,
+                book_id,
+            )
+        )
+
     conn.commit()
     conn.close()
 
@@ -315,6 +381,32 @@ def delete_book(book_id):
         WHERE id = ?
         """,
         (
+            book_id,
+        )
+    )
+
+    conn.commit()
+    conn.close()
+
+# ============================================================
+# Update rating
+# ============================================================
+
+def update_book_rating(
+    book_id,
+    rating
+):
+
+    conn = get_connection()
+
+    conn.execute(
+        """
+        UPDATE books
+        SET rating = ?
+        WHERE id = ?
+        """,
+        (
+            rating,
             book_id,
         )
     )

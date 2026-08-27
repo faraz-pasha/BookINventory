@@ -1,10 +1,12 @@
 import shutil
+import sqlite3
 import tempfile
 from pathlib import Path
 
-
-DB_PATH = Path("database/library.db")
-IMAGES_PATH = Path("images")
+from app_paths import (
+    DB_PATH,
+    IMAGES_DIR,
+)
 
 
 def create_backup(destination_file):
@@ -22,7 +24,9 @@ def create_backup(destination_file):
 
     with tempfile.TemporaryDirectory() as temp_dir:
 
-        temp_path = Path(temp_dir)
+        temp_path = Path(
+            temp_dir
+        )
 
         # ----------------------------------------------------
         # Copy database
@@ -39,10 +43,10 @@ def create_backup(destination_file):
         # Copy cover images
         # ----------------------------------------------------
 
-        if IMAGES_PATH.exists():
+        if IMAGES_DIR.exists():
 
             shutil.copytree(
-                IMAGES_PATH,
+                IMAGES_DIR,
                 temp_path / "images",
             )
 
@@ -62,6 +66,7 @@ def create_backup(destination_file):
         archive_path
     )
 
+
 def restore_backup(backup_file):
 
     backup_file = Path(
@@ -69,13 +74,16 @@ def restore_backup(backup_file):
     )
 
     if not backup_file.exists():
+
         raise FileNotFoundError(
             "Backup file does not exist."
         )
 
     with tempfile.TemporaryDirectory() as temp_dir:
 
-        temp_path = Path(temp_dir)
+        temp_path = Path(
+            temp_dir
+        )
 
         # ----------------------------------------------------
         # Extract backup
@@ -88,11 +96,13 @@ def restore_backup(backup_file):
         )
 
         backup_database = (
-            temp_path / "library.db"
+            temp_path
+            / "library.db"
         )
 
         backup_images = (
-            temp_path / "images"
+            temp_path
+            / "images"
         )
 
         # ----------------------------------------------------
@@ -100,6 +110,7 @@ def restore_backup(backup_file):
         # ----------------------------------------------------
 
         if not backup_database.exists():
+
             raise ValueError(
                 "This is not a valid Book Inventory backup."
             )
@@ -122,21 +133,82 @@ def restore_backup(backup_file):
         # Restore cover images
         # ----------------------------------------------------
 
-        if IMAGES_PATH.exists():
+        if IMAGES_DIR.exists():
+
             shutil.rmtree(
-                IMAGES_PATH
+                IMAGES_DIR
             )
 
         if backup_images.exists():
 
             shutil.copytree(
                 backup_images,
-                IMAGES_PATH,
+                IMAGES_DIR,
             )
 
         else:
 
-            IMAGES_PATH.mkdir(
+            IMAGES_DIR.mkdir(
                 parents=True,
                 exist_ok=True,
             )
+
+        # ----------------------------------------------------
+        # Normalize restored cover paths
+        # ----------------------------------------------------
+
+        normalize_cover_paths()
+
+
+def normalize_cover_paths():
+
+    if not DB_PATH.exists():
+        return
+
+    conn = sqlite3.connect(
+        DB_PATH
+    )
+
+    try:
+
+        rows = conn.execute(
+            """
+            SELECT id, cover
+            FROM books
+            WHERE cover IS NOT NULL
+              AND cover != ''
+            """
+        ).fetchall()
+
+        for book_id, cover_path in rows:
+
+            old_path = Path(
+                cover_path
+            )
+
+            filename = old_path.name
+
+            new_path = (
+                IMAGES_DIR
+                / filename
+            )
+
+            if new_path.exists():
+
+                conn.execute(
+                    """
+                    UPDATE books
+                    SET cover = ?
+                    WHERE id = ?
+                    """,
+                    (
+                        str(new_path),
+                        book_id,
+                    )
+                )
+
+        conn.commit()
+
+    finally:
+
+        conn.close()

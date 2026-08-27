@@ -8,7 +8,7 @@ from PySide6.QtCore import (
 from PySide6.QtGui import (
     QPixmap,
 )
-
+from ui.messages import show_message
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -282,10 +282,11 @@ class CoverLookupDialog(QDialog):
             )
 
         if item is None:
-            QMessageBox.warning(
+            show_message(
                 self,
                 "No Cover Selected",
-                "Please select a cover."
+                "Please select a cover.",
+                QMessageBox.Warning,
             )
 
             return

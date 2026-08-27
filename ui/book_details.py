@@ -39,8 +39,8 @@ class BookDetails(QDialog):
         )
 
         self.resize(
-            600,
-            600
+            850,
+            650
         )
 
         self.setObjectName(
@@ -268,10 +268,58 @@ class BookDetails(QDialog):
             top_layout
         )
 
+        # --------------------
+        # Description + Notes
+        # --------------------
+
+        bottom_layout = QHBoxLayout()
+
+        bottom_layout.setSpacing(
+            15
+        )
+
+        # --------------------
+        # Description
+        # --------------------
+
+        description_layout = QVBoxLayout()
+
+        description_label = QLabel(
+            "Description"
+        )
+
+        description_label.setObjectName(
+            "sectionTitle"
+        )
+
+        description = QTextEdit()
+
+        description.setText(
+            book.get("description")
+            or "No description available."
+        )
+
+        description.setReadOnly(
+            True
+        )
+
+        description.setMinimumHeight(
+            180
+        )
+
+        description_layout.addWidget(
+            description_label
+        )
+
+        description_layout.addWidget(
+            description
+        )
 
         # --------------------
         # Notes
         # --------------------
+
+        notes_layout = QVBoxLayout()
 
         notes_label = QLabel(
             "Notes"
@@ -281,11 +329,11 @@ class BookDetails(QDialog):
             "sectionTitle"
         )
 
-
         notes = QTextEdit()
 
         notes.setText(
-            book["notes"]
+            book.get("notes")
+            or "No notes."
         )
 
         notes.setReadOnly(
@@ -293,18 +341,34 @@ class BookDetails(QDialog):
         )
 
         notes.setMinimumHeight(
-            150
+            180
         )
 
-
-        main_layout.addWidget(
+        notes_layout.addWidget(
             notes_label
         )
 
-        main_layout.addWidget(
+        notes_layout.addWidget(
             notes
         )
 
+        # --------------------
+        # Add both columns
+        # --------------------
+
+        bottom_layout.addLayout(
+            description_layout,
+            1
+        )
+
+        bottom_layout.addLayout(
+            notes_layout,
+            1
+        )
+
+        main_layout.addLayout(
+            bottom_layout
+        )
 
         # --------------------
         # Buttons

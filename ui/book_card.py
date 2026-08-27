@@ -4,6 +4,8 @@ from PySide6.QtWidgets import (
     QFrame,
     QVBoxLayout,
     QLabel,
+    QPushButton,
+    QMenu,
 )
 
 from PySide6.QtCore import (
@@ -11,7 +13,10 @@ from PySide6.QtCore import (
     Signal,
 )
 
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import (
+    QPixmap,
+    QAction,
+)
 
 from constants import (
     STATUS_WANT_TO_READ,
@@ -23,6 +28,8 @@ from constants import (
 class BookCard(QFrame):
 
     details_requested = Signal(dict)
+    status_change_requested = Signal(dict, str)
+    rating_change_requested = Signal(dict, int)
 
     def __init__(self, book):
 
@@ -205,36 +212,6 @@ class BookCard(QFrame):
         layout.addWidget(
             author
         )
-
-        # -------------------
-        # Rating
-        # -------------------
-
-        rating = book.get(
-            "rating",
-            0
-        ) or 0
-
-        if rating > 0:
-
-            stars = QLabel(
-                "★" * rating
-            )
-
-        else:
-
-            stars = QLabel(
-                "No Rating"
-            )
-
-        stars.setAlignment(
-            Qt.AlignCenter
-        )
-
-        layout.addWidget(
-            stars
-        )
-
         # -------------------
         # Genre
         # -------------------
@@ -251,35 +228,175 @@ class BookCard(QFrame):
             genre
         )
 
+        layout.addSpacing(
+            4
+        )
+
+
+
+
+        # -------------------
+        # Rating
+        # -------------------
+
+        self.rating = book.get(
+            "rating",
+            0
+        ) or 0
+
+        rating_text = (
+            "★" * self.rating
+            if self.rating > 0
+            else "No Rating"
+        )
+
+
+        self.rating_button = QPushButton(
+            rating_text
+        )
+
+        self.rating_button.setObjectName(
+            "ratingButton"
+        )
+
+        self.rating_button.setCursor(
+            Qt.PointingHandCursor
+        )
+
+        self.rating_button.clicked.connect(
+            self.show_rating_menu
+        )
+        self.rating_button.setFixedHeight(24)
+
+        layout.addWidget(
+            self.rating_button,
+            alignment=Qt.AlignHCenter
+        )
+
+        layout.addSpacing(
+            4
+        )
+
         # -------------------
         # Reading status
         # -------------------
 
-        status_text = {
+        self.status_text = {
             STATUS_WANT_TO_READ:
                 "📚 Want to Read",
 
             STATUS_CURRENTLY_READING:
-                "📖 Currently Reading",
+                "Currently Reading",
 
             STATUS_FINISHED:
                 "✓ Finished",
         }
 
-        status = QLabel(
-            status_text.get(
+        self.status_button = QPushButton(
+            self.status_text.get(
                 self.reading_status,
                 "📚 Want to Read"
             )
         )
 
-        status.setAlignment(
-            Qt.AlignCenter
+        self.status_button.setObjectName(
+            "statusButton"
         )
 
-        layout.addWidget(
-            status
+        self.status_button.setCursor(
+            Qt.PointingHandCursor
         )
+
+        self.status_button.clicked.connect(
+            self.show_status_menu
+        )
+        self.status_button.setFixedHeight(24)
+        layout.addWidget(
+            self.status_button,
+            alignment=Qt.AlignHCenter
+        )
+
+    # -------------------
+    # Status menu
+    # -------------------
+
+    def show_status_menu(
+        self
+    ):
+
+        menu = QMenu(
+            self
+        )
+
+        statuses = [
+            (
+                "📚 Want to Read",
+                STATUS_WANT_TO_READ
+            ),
+            (
+                "📖 Currently Reading",
+                STATUS_CURRENTLY_READING
+            ),
+            (
+                "✓ Finished",
+                STATUS_FINISHED
+            ),
+        ]
+
+        for text, status_value in statuses:
+
+            action = QAction(
+                text,
+                menu
+            )
+
+            action.setCheckable(
+                True
+            )
+
+            action.setChecked(
+                status_value
+                == self.reading_status
+            )
+
+            action.triggered.connect(
+                lambda checked=False,
+                value=status_value:
+                self.request_status_change(
+                    value
+                )
+            )
+
+            menu.addAction(
+                action
+            )
+
+        menu.exec(
+            self.status_button.mapToGlobal(
+                self.status_button.rect().bottomLeft()
+            )
+        )
+
+    # -------------------
+    # Request status change
+    # -------------------
+
+    def request_status_change(
+        self,
+        new_status
+    ):
+
+        if new_status == self.reading_status:
+            return
+
+        self.status_change_requested.emit(
+            self.book,
+            new_status
+        )
+
+    # -------------------
+    # Book details
+    # -------------------
 
     def mouseDoubleClickEvent(
         self,
@@ -292,4 +409,71 @@ class BookCard(QFrame):
 
         super().mouseDoubleClickEvent(
             event
+        )
+
+    # -------------------
+    # Rating menu
+    # -------------------
+
+    def show_rating_menu(
+            self
+    ):
+
+        menu = QMenu(
+            self
+        )
+
+        ratings = [
+            ("No Rating", 0),
+            ("★", 1),
+            ("★★", 2),
+            ("★★★", 3),
+            ("★★★★", 4),
+            ("★★★★★", 5),
+        ]
+
+        for text, rating_value in ratings:
+            action = QAction(
+                text,
+                menu
+            )
+
+            action.setCheckable(
+                True
+            )
+
+            action.setChecked(
+                rating_value
+                == self.rating
+            )
+
+            action.triggered.connect(
+                lambda checked=False,
+                       value=rating_value:
+                self.request_rating_change(
+                    value
+                )
+            )
+
+            menu.addAction(
+                action
+            )
+
+        menu.exec(
+            self.rating_button.mapToGlobal(
+                self.rating_button.rect().bottomLeft()
+            )
+        )
+
+    def request_rating_change(
+            self,
+            new_rating
+    ):
+
+        if new_rating == self.rating:
+            return
+
+        self.rating_change_requested.emit(
+            self.book,
+            new_rating
         )

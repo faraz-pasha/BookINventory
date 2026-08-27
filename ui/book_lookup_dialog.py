@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QMessageBox,
 )
+from ui.messages import show_message
 
 
 class BookLookupDialog(QDialog):
@@ -149,11 +150,11 @@ class BookLookupDialog(QDialog):
             )
 
         if item is None:
-
-            QMessageBox.warning(
+            show_message(
                 self,
                 "No Book Selected",
-                "Please select a book."
+                "Please select a book.",
+                QMessageBox.Warning,
             )
 
             return

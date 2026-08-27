@@ -15,6 +15,8 @@ from PySide6.QtWidgets import (
     QMessageBox,
 )
 
+
+
 from PySide6.QtCore import (
     Qt,
     QTimer,
@@ -30,11 +32,16 @@ from ui.book_card import BookCard
 from ui.book_details import BookDetails
 from ui.statistics_page import StatisticsPage
 from ui.suggestion_page import SuggestionPage
-
+from ui.messages import (
+    show_message,
+    show_confirmation,
+)
 from database import (
     add_book,
     get_books,
     update_book,
+    update_book_status,
+    update_book_rating,
     delete_book,
 )
 
@@ -492,8 +499,17 @@ class MainWindow(QMainWindow):
         for book in books:
 
             card = BookCard(book)
+
             card.details_requested.connect(
                 self.show_details
+            )
+
+            card.status_change_requested.connect(
+                self.change_book_status
+            )
+
+            card.rating_change_requested.connect(
+                self.change_book_rating
             )
 
             self.grid.addWidget(
@@ -508,7 +524,32 @@ class MainWindow(QMainWindow):
                 col = 0
                 row += 1
 
+    def change_book_status(
+            self,
+            book,
+            new_status
+    ):
 
+        data = dict(book)
+
+        data["reading_status"] = new_status
+
+        # Keep the legacy is_read field consistent
+        data["is_read"] = (
+                new_status == STATUS_FINISHED
+        )
+
+        # If the book is being marked as finished
+        # and has no date_read, let the edit/database
+        # logic handle the existing value for now.
+
+        update_book(
+            book["id"],
+            data
+        )
+
+        self.update_shelves()
+        self.load_books()
 
     def edit_book(self, book):
 
@@ -587,10 +628,15 @@ class MainWindow(QMainWindow):
                 [name]
             )
 
+            parent.setData(
+                0,
+                Qt.UserRole,
+                (status, "all")
+            )
+
             self.sidebar.addTopLevelItem(
                 parent
             )
-
             # -------------------------
             # Filter by reading status
             # -------------------------
@@ -1001,45 +1047,24 @@ class MainWindow(QMainWindow):
                 backup_file
             )
 
-            message = QMessageBox(
-                self
+            show_message(
+                self,
+                "Backup Complete",
+                "Library backed up successfully!",
+                QMessageBox.Information,
+                f"Saved to:\n{backup_path}",
             )
-
-            message.setObjectName(
-                "backupSuccessMessage"
-            )
-
-            message.setWindowTitle(
-                "Backup Complete"
-            )
-
-            message.setIcon(
-                QMessageBox.Information
-            )
-
-            message.setText(
-                "Library backed up successfully!"
-            )
-
-            message.setInformativeText(
-                f"Saved to:\n{backup_path}"
-            )
-
-            message.setStandardButtons(
-                QMessageBox.Ok
-            )
-
-            message.exec()
 
         except Exception as error:
 
-            QMessageBox.critical(
+            show_message(
                 self,
                 "Backup Failed",
                 (
                     "The backup could not be created.\n\n"
                     f"{error}"
                 ),
+                QMessageBox.Critical,
             )
 
     def restore_library(self):
@@ -1054,42 +1079,17 @@ class MainWindow(QMainWindow):
         if not backup_file:
             return
 
-        confirm = QMessageBox(
-            self
+        confirmed = show_confirmation(
+            self,
+            "Restore Backup",
+            "Are you sure you want to restore this backup?",
+            (
+                "Your current library and cover images "
+                "will be replaced."
+            ),
         )
 
-        confirm.setObjectName(
-            "restoreConfirmMessage"
-        )
-
-        confirm.setWindowTitle(
-            "Restore Backup"
-        )
-
-        confirm.setIcon(
-            QMessageBox.Warning
-        )
-
-        confirm.setText(
-            "Are you sure you want to restore this backup?"
-        )
-
-        confirm.setInformativeText(
-            "Your current library and cover images "
-            "will be replaced."
-        )
-
-        confirm.setStandardButtons(
-            QMessageBox.Yes | QMessageBox.No
-        )
-
-        confirm.setDefaultButton(
-            QMessageBox.No
-        )
-
-        result = confirm.exec()
-
-        if result != QMessageBox.Yes:
+        if not confirmed:
             return
 
         try:
@@ -1101,41 +1101,23 @@ class MainWindow(QMainWindow):
             self.update_shelves()
             self.load_books()
 
-            message = QMessageBox(
-                self
+            show_message(
+                self,
+                "Restore Complete",
+                "Library restored successfully!",
+                QMessageBox.Information,
             )
-
-            message.setObjectName(
-                "backupSuccessMessage"
-            )
-
-            message.setWindowTitle(
-                "Restore Complete"
-            )
-
-            message.setIcon(
-                QMessageBox.Information
-            )
-
-            message.setText(
-                "Library restored successfully!"
-            )
-
-            message.setStandardButtons(
-                QMessageBox.Ok
-            )
-
-            message.exec()
 
         except Exception as error:
 
-            QMessageBox.critical(
+            show_message(
                 self,
                 "Restore Failed",
                 (
                     "The backup could not be restored.\n\n"
                     f"{error}"
                 ),
+                QMessageBox.Critical,
             )
 
     def export_library(self):
@@ -1159,43 +1141,49 @@ class MainWindow(QMainWindow):
                 books
             )
 
-            message = QMessageBox(
-                self
+            show_message(
+                self,
+                "Export Complete",
+                "Library exported successfully!",
+                QMessageBox.Information,
+                f"Saved to:\n{export_path}",
             )
-
-            message.setObjectName(
-                "backupSuccessMessage"
-            )
-
-            message.setWindowTitle(
-                "Export Complete"
-            )
-
-            message.setIcon(
-                QMessageBox.Information
-            )
-
-            message.setText(
-                "Library exported successfully!"
-            )
-
-            message.setInformativeText(
-                f"Saved to:\n{export_path}"
-            )
-
-            message.setStandardButtons(
-                QMessageBox.Ok
-            )
-
-            message.exec()
 
         except Exception as error:
 
-            QMessageBox.critical(
+            show_message(
                 self,
                 "Export Failed",
                 (
                     "The library could not be exported.\n\n"
                     f"{error}"
                 ),
+                QMessageBox.Critical,
             )
+
+    def change_book_status(
+            self,
+            book,
+            new_status
+    ):
+
+        update_book_status(
+            book["id"],
+            new_status
+        )
+
+        self.update_shelves()
+        self.load_books()
+
+    def change_book_rating(
+            self,
+            book,
+            new_rating
+    ):
+
+        update_book_rating(
+            book["id"],
+            new_rating
+        )
+
+        self.load_books()

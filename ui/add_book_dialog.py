@@ -5,6 +5,7 @@ from PySide6.QtCore import (
     QDate,
     Qt,
 )
+from ui.messages import show_message
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -25,10 +26,11 @@ from book_lookup import (
     search_books,
     download_cover,
 )
+
+from app_paths import IMAGES_DIR
 from ui.book_lookup_dialog import BookLookupDialog
 from ui.cover_lookup_dialog import CoverLookupDialog
 
-from PySide6.QtCore import QDate
 from uuid import uuid4
 
 from constants import (
@@ -499,7 +501,7 @@ class AddBookDialog(QDialog):
     # =====================================================
 
     def save_book(
-        self
+            self
     ):
 
         title = (
@@ -508,11 +510,11 @@ class AddBookDialog(QDialog):
         )
 
         if not title:
-
-            QMessageBox.warning(
+            show_message(
                 self,
                 "Missing Title",
-                "Please enter a title."
+                "Please enter a title.",
+                QMessageBox.Warning,
             )
 
             self.title.setFocus()
@@ -520,15 +522,15 @@ class AddBookDialog(QDialog):
             return
 
         if (
-            self.genre.currentText()
-            == "Other"
-            and not self.custom_genre.text().strip()
+                self.genre.currentText()
+                == "Other"
+                and not self.custom_genre.text().strip()
         ):
-
-            QMessageBox.warning(
+            show_message(
                 self,
                 "Missing Genre",
-                "Please enter a custom genre."
+                "Please enter a custom genre.",
+                QMessageBox.Warning,
             )
 
             self.custom_genre.setFocus()
@@ -536,7 +538,6 @@ class AddBookDialog(QDialog):
             return
 
         self.accept()
-
     # =====================================================
     # Return book data
     # =====================================================
@@ -552,15 +553,7 @@ class AddBookDialog(QDialog):
             source = Path(
                 self.cover.text()
             )
-
-            images_dir = Path(
-                "images"
-            )
-
-            images_dir.mkdir(
-                parents=True,
-                exist_ok=True
-            )
+            images_dir = IMAGES_DIR
 
             # Keep existing library image path unchanged
             if (
@@ -600,10 +593,22 @@ class AddBookDialog(QDialog):
                     self.lookup_cover_url
                 )
 
-            except RuntimeError:
+            except RuntimeError as error:
+
+                show_message(
+
+                    self,
+
+                    "Cover Download Failed",
+
+                    str(error),
+
+                    QMessageBox.Warning,
+
+                )
 
                 cover_path = ""
-        # -------------------------
+# -------------------------
         # UI text -> internal status
         # -------------------------
 
@@ -753,10 +758,11 @@ class AddBookDialog(QDialog):
         )
 
         if not title:
-            QMessageBox.warning(
+            show_message(
                 self,
                 "Missing Title",
-                "Enter a title before searching."
+                "Enter a title before searching.",
+                QMessageBox.Warning,
             )
 
             self.title.setFocus()
@@ -774,21 +780,24 @@ class AddBookDialog(QDialog):
                 title,
                 author
             )
+
         except Exception as error:
 
-            QMessageBox.critical(
+            show_message(
                 self,
                 "Lookup Failed",
-                str(error)
+                str(error),
+                QMessageBox.Critical,
             )
 
             return
 
         if not results:
-            QMessageBox.information(
+            show_message(
                 self,
                 "No Results",
-                "No matching books were found."
+                "No matching books were found.",
+                QMessageBox.Information,
             )
 
             return

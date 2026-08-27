@@ -4,7 +4,7 @@ import os
 import time
 import urllib.parse
 import urllib.request
-from pathlib import Path
+from app_paths import IMAGES_DIR
 from uuid import uuid4
 from urllib.error import HTTPError
 
@@ -296,8 +296,7 @@ def search_books(
     ]
 
 def download_cover(
-    cover_url,
-    images_dir="images"
+    cover_url
 ):
 
     if not cover_url:
@@ -313,17 +312,8 @@ def download_cover(
             ]
         )
 
-    images_dir = Path(
-        images_dir
-    )
-
-    images_dir.mkdir(
-        parents=True,
-        exist_ok=True
-    )
-
     destination = (
-        images_dir
+        IMAGES_DIR
         / f"{uuid4().hex}.jpg"
     )
 
